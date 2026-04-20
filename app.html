@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sound Board</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <a href="index.html" class="home-btn">← Home</a>
+
+  <!-- Auth + subscribe buttons -->
+  <div id="auth-btn-wrap">
+    <button id="subscribe-btn" class="auth-btn subscribe-btn hidden">Get Sound Packs</button>
+    <button id="auth-btn" class="auth-btn">Log in</button>
+    <button id="logout-btn" class="auth-btn logout-btn hidden">Log out</button>
+  </div>
+
+  <!-- Auth modal -->
+  <div id="auth-overlay" class="auth-overlay hidden">
+    <div class="auth-modal">
+      <button id="auth-close" class="auth-close">✕</button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Log in</button>
+        <button class="auth-tab" data-tab="signup">Sign up</button>
+      </div>
+      <div id="auth-login" class="auth-pane">
+        <input type="email" id="login-email" placeholder="Email" class="auth-input">
+        <input type="password" id="login-password" placeholder="Password" class="auth-input">
+        <button id="login-submit" class="auth-submit">Log in</button>
+      </div>
+      <div id="auth-signup" class="auth-pane hidden">
+        <input type="email" id="signup-email" placeholder="Email" class="auth-input">
+        <input type="password" id="signup-password" placeholder="Password (min 6 chars)" class="auth-input">
+        <button id="signup-submit" class="auth-submit">Create account</button>
+      </div>
+      <div id="auth-status" class="auth-status hidden"></div>
+    </div>
+  </div>
+
+  <nav class="theme-nav left">
+    <button class="nav-btn" id="prev-btn">&#8592;</button>
+    <span class="theme-label" id="theme-label-left"></span>
+  </nav>
+
+  <nav class="theme-nav right">
+    <button class="nav-btn" id="next-btn">&#8594;</button>
+    <span class="theme-label" id="theme-label-right"></span>
+  </nav>
+
+  <canvas id="particle-canvas"></canvas>
+  <div class="dot-grid"></div>
+
+  <div id="animals-bg">
+    <span class="animal a1">🦁</span>
+    <span class="animal a2">🐼</span>
+    <span class="animal a3">🦊</span>
+    <span class="animal a4">🐸</span>
+    <span class="animal a5">🦋</span>
+    <span class="animal a6">🐮</span>
+    <span class="animal a7">🐷</span>
+    <span class="animal a8">🦒</span>
+    <span class="animal a9">🐘</span>
+    <span class="animal a10">🦄</span>
+    <span class="animal a11">🐬</span>
+    <span class="animal a12">🦆</span>
+    <span class="animal a13">🐙</span>
+    <span class="animal a14">🐢</span>
+  </div>
+
+  <div class="bg-blobs">
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+    <div class="blob blob4"></div>
+    <div class="blob blob5"></div>
+  </div>
+
+  <div class="grid-wrapper">
+    <div id="master-bar"><div id="master-bar-fill"></div></div>
+    <div id="transport-controls">
+      <button id="split-btn" class="transport-btn">SPLIT ½</button>
+    </div>
+
+    <div class="grid-with-knobs">
+      <div class="knob-col-wrap">
+        <span class="knob-col-label">VOL</span>
+        <div class="knob-col" id="vol-knobs"></div>
+      </div>
+
+      <div class="container">
+        <!-- Row 1 -->
+        <div class="btn" id="btn1"><a></a></div>
+        <div class="btn" id="btn2"><a></a></div>
+        <div class="btn" id="btn3"><a></a></div>
+        <div class="btn" id="btn4"><a></a></div>
+        <div class="btn" id="btn5"><a></a></div>
+
+        <!-- Row 2 -->
+        <div class="btn" id="btn6"><a></a></div>
+        <div class="btn" id="btn7"><a></a></div>
+        <div class="btn" id="btn8"><a></a></div>
+        <div class="btn" id="btn9"><a></a></div>
+        <div class="btn" id="btn10"><a></a></div>
+
+        <!-- Row 3 -->
+        <div class="btn" id="btn11"><a></a></div>
+        <div class="btn" id="btn12"><a></a></div>
+        <div class="btn" id="btn13"><a></a></div>
+        <div class="btn" id="btn14"><a></a></div>
+        <div class="btn" id="btn15"><a></a></div>
+
+        <!-- Row 4 -->
+        <div class="btn" id="btn16"><a></a></div>
+        <div class="btn" id="btn17"><a></a></div>
+        <div class="btn" id="btn18"><a></a></div>
+        <div class="btn" id="btn19"><a></a></div>
+        <div class="btn" id="btn20"><a></a></div>
+
+        <!-- Row 5 -->
+        <div class="btn" id="btn21"><a></a></div>
+        <div class="btn" id="btn22"><a></a></div>
+        <div class="btn" id="btn23"><a></a></div>
+        <div class="btn" id="btn24"><a></a></div>
+        <div class="btn" id="btn25"><a></a></div>
+      </div>
+
+      <div class="knob-col-wrap">
+        <span class="knob-col-label">LP</span>
+        <div class="knob-col" id="filter-knobs"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
+</body>
+</html>

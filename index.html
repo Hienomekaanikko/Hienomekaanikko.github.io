@@ -2,37 +2,647 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sound Board</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Launchpad — Make beats in your browser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700&display=swap">
+  <style>
+    :root {
+      --c1: #ff1f71;
+      --c2: #2db2ff;
+      --c3: #1eff45;
+      --c4: #ffd500;
+      --c5: #ff6a00;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "Roboto", sans-serif;
+      background: linear-gradient(160deg, #5d326c 0%, #350048 60%, #0d001a 100%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Background layers */
+    .bg-blobs {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.3;
+    }
+
+    .blob1 { width: 500px; height: 500px; background: var(--c1); top: -10%; left: -8%;  animation: drift1  9s infinite alternate ease-in-out; }
+    .blob2 { width: 420px; height: 420px; background: var(--c2); top: 5%;  right: -8%; animation: drift2 11s infinite alternate ease-in-out; }
+    .blob3 { width: 380px; height: 380px; background: var(--c3); bottom: 10%; left: 8%;  animation: drift3 13s infinite alternate ease-in-out; }
+    .blob4 { width: 340px; height: 340px; background: var(--c4); bottom: -5%; right: 5%;  animation: drift4 10s infinite alternate ease-in-out; }
+    .blob5 { width: 400px; height: 400px; background: var(--c5); top: 45%; left: 38%;  animation: drift5 14s infinite alternate ease-in-out; }
+
+    @keyframes drift1 { from { transform: translate(0,0) scale(1); }    to { transform: translate(60px,80px) scale(1.15); } }
+    @keyframes drift2 { from { transform: translate(0,0) scale(1.1); }  to { transform: translate(-70px,60px) scale(0.9); } }
+    @keyframes drift3 { from { transform: translate(0,0) scale(0.95); } to { transform: translate(80px,-60px) scale(1.1); } }
+    @keyframes drift4 { from { transform: translate(0,0) scale(1); }    to { transform: translate(-50px,-80px) scale(1.2); } }
+    @keyframes drift5 { from { transform: translate(0,0) scale(1.05); } to { transform: translate(-40px,50px) scale(0.85); } }
+
+    .dot-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 38px 38px;
+      animation: grid-shift 22s linear infinite;
+    }
+
+    @keyframes grid-shift {
+      from { background-position: 0 0; }
+      to   { background-position: 38px 38px; }
+    }
+
+    /* Layout */
+    .page {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Nav */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 28px 48px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-family: "Poppins", sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-login {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+      padding: 8px 20px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.2s, color 0.2s;
+      text-decoration: none;
+    }
+
+    .nav-login:hover {
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 80px 24px 100px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .hero-label {
+      display: inline-block;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 5px 16px;
+      margin-bottom: 28px;
+    }
+
+    .hero h1 {
+      font-family: "Poppins", sans-serif;
+      font-weight: 800;
+      font-size: clamp(42px, 7vw, 72px);
+      line-height: 1.1;
+      letter-spacing: -1px;
+      margin-bottom: 22px;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(90deg, var(--c1), var(--c2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.7;
+      margin-bottom: 44px;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .cta-group {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      color: #1a0028;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      padding: 14px 32px;
+      border-radius: 14px;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px rgba(255,255,255,0.18);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(255,255,255,0.28);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.85);
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      padding: 14px 32px;
+      border-radius: 14px;
+      text-decoration: none;
+      backdrop-filter: blur(12px);
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.13);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(255,255,255,0.1);
+    }
+
+    /* Pad preview */
+    .pad-preview {
+      display: flex;
+      justify-content: center;
+      padding: 0 24px 100px;
+    }
+
+    .pad-mock {
+      display: grid;
+      grid-template-columns: repeat(5, 64px);
+      grid-template-rows: repeat(5, 64px);
+      gap: 10px;
+      padding: 20px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 20px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .pad-cell {
+      position: relative;
+      width: 54px;
+      height: 54px;
+    }
+
+    .pad-cell a {
+      position: absolute;
+      inset: 0;
+      display: block;
+      border-radius: 13px;
+      background: rgba(255,255,255,0.05);
+      border-top: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 8px 12px rgba(0,0,0,0.3);
+      backdrop-filter: blur(15px);
+      overflow: hidden;
+      transition: box-shadow 0.3s ease;
+    }
+
+    /* Shimmer on inner */
+    .pad-cell a::before {
+      content: '';
+      position: absolute;
+      top: -30%; left: -80%;
+      width: 120%; height: 160%;
+      background: linear-gradient(120deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.07) 50%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* Top & bottom glow bars */
+    .pad-cell::before,
+    .pad-cell::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 6px;
+      border-radius: 6px;
+      z-index: 1;
+      transition: width 0.4s ease, height 0.4s ease, border-radius 0.4s ease;
+    }
+    .pad-cell::before { bottom: -3px; }
+    .pad-cell::after  { top: -3px; }
+
+    .pad-cell.r1::before, .pad-cell.r1::after { background: #ff1f71; box-shadow: 0 0 5px #ff1f71, 0 0 15px #ff1f71, 0 0 30px #ff1f71; }
+    .pad-cell.r2::before, .pad-cell.r2::after { background: #2db2ff; box-shadow: 0 0 5px #2db2ff, 0 0 15px #2db2ff, 0 0 30px #2db2ff; }
+    .pad-cell.r3::before, .pad-cell.r3::after { background: #1eff45; box-shadow: 0 0 5px #1eff45, 0 0 15px #1eff45, 0 0 30px #1eff45; }
+    .pad-cell.r4::before, .pad-cell.r4::after { background: #ffd500; box-shadow: 0 0 5px #ffd500, 0 0 15px #ffd500, 0 0 30px #ffd500; }
+    .pad-cell.r5::before, .pad-cell.r5::after { background: #ff6a00; box-shadow: 0 0 5px #ff6a00, 0 0 15px #ff6a00, 0 0 30px #ff6a00; }
+
+    /* Lit / active state */
+    .pad-cell.lit::before,
+    .pad-cell.lit::after {
+      width: 78%;
+      height: 44%;
+      border-radius: 18px;
+    }
+
+    .pad-cell.lit a {
+      box-shadow: 0 0 20px #fff, 0 0 40px #fff, 0 0 60px #fff;
+    }
+
+    /* Packs section */
+    .section {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 24px 120px;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 52px;
+    }
+
+    .section-header h2 {
+      font-family: "Poppins", sans-serif;
+      font-weight: 700;
+      font-size: clamp(28px, 4vw, 40px);
+      margin-bottom: 12px;
+    }
+
+    .section-header p {
+      color: rgba(255,255,255,0.45);
+      font-size: 16px;
+    }
+
+    .packs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .pack-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      padding: 28px 24px;
+      backdrop-filter: blur(14px);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pack-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+
+    .pack-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 18px 18px 0 0;
+    }
+
+    .pack-card.c1::before { background: linear-gradient(90deg, var(--c1), var(--c5)); }
+    .pack-card.c2::before { background: linear-gradient(90deg, var(--c2), var(--c3)); }
+    .pack-card.c3::before { background: linear-gradient(90deg, var(--c4), var(--c1)); }
+    .pack-card.c4::before { background: linear-gradient(90deg, var(--c3), var(--c2)); }
+
+    .pack-tag {
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 10px;
+    }
+
+    .pack-card h3 {
+      font-family: "Poppins", sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .pack-card p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.45);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .pack-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .pack-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      opacity: 0.7;
+    }
+
+    .pack-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    /* Pricing strip */
+    .pricing-strip {
+      max-width: 600px;
+      margin: 0 auto 120px;
+      padding: 0 24px;
+      text-align: center;
+    }
+
+    .pricing-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 22px;
+      padding: 44px 40px;
+      backdrop-filter: blur(16px);
+    }
+
+    .pricing-card h2 {
+      font-family: "Poppins", sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .price {
+      font-family: "Poppins", sans-serif;
+      font-weight: 800;
+      font-size: 52px;
+      line-height: 1;
+      margin: 20px 0 4px;
+    }
+
+    .price sup {
+      font-size: 22px;
+      vertical-align: super;
+      font-weight: 600;
+    }
+
+    .price-period {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 28px;
+    }
+
+    .pricing-features {
+      list-style: none;
+      text-align: left;
+      margin-bottom: 32px;
+    }
+
+    .pricing-features li {
+      font-size: 14px;
+      color: rgba(255,255,255,0.65);
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pricing-features li::before {
+      content: '✓';
+      color: var(--c3);
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .nav-badge {
+      display: inline-block;
+      font-size: 11px;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+
+    .subscribed-card {
+      background: rgba(30,255,69,0.06);
+      border: 1px solid rgba(30,255,69,0.2);
+      border-radius: 22px;
+      padding: 44px 40px;
+      text-align: center;
+    }
+
+    .subscribed-card .check { font-size: 40px; margin-bottom: 16px; }
+
+    .subscribed-card h2 {
+      font-family: "Poppins", sans-serif;
+      font-weight: 700;
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .subscribed-card p {
+      color: rgba(255,255,255,0.45);
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+
+    /* Packs modal */
+    .packs-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .packs-overlay.hidden { display: none; }
+
+    .packs-modal {
+      background: rgba(20,5,35,0.97);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      width: 100%; max-width: 860px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 36px;
+      position: relative;
+    }
+
+    .packs-modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 32px;
+    }
+
+    .packs-modal-header h2 {
+      font-family: "Poppins", sans-serif;
+      font-weight: 700; font-size: 22px;
+    }
+
+    .packs-modal-close {
+      background: none; border: none;
+      color: rgba(255,255,255,0.35);
+      font-size: 20px; cursor: pointer;
+      transition: color 0.15s;
+    }
+    .packs-modal-close:hover { color: #fff; }
+
+    .packs-modal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .pm-card {
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .pm-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.4); }
+
+    .pm-card-header {
+      height: 72px;
+      display: flex; align-items: flex-end;
+      padding: 0 20px 14px;
+      position: relative;
+    }
+
+    .pm-color-dots {
+      display: flex; gap: 6px;
+    }
+
+    .pm-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .pm-card-body { padding: 16px 20px 20px; }
+
+    .pm-tag {
+      font-size: 10px; letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 6px; display: block;
+    }
+
+    .pm-card-body h3 {
+      font-family: "Poppins", sans-serif;
+      font-weight: 700; font-size: 17px;
+      margin-bottom: 8px;
+    }
+
+    .pm-card-body p {
+      font-size: 12px; color: rgba(255,255,255,0.45);
+      line-height: 1.6; margin-bottom: 16px;
+    }
+
+    .pm-play-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: #fff; font-size: 12px; font-weight: 600;
+      padding: 7px 14px;
+      text-decoration: none;
+      transition: background 0.15s;
+      letter-spacing: 0.5px;
+    }
+    .pm-play-btn:hover { background: rgba(255,255,255,0.2); }
+
+    .pm-free-badge {
+      position: absolute; top: 12px; right: 12px;
+      font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+      background: rgba(30,255,69,0.15); color: #1eff45;
+      border: 1px solid rgba(30,255,69,0.3);
+      border-radius: 20px; padding: 3px 8px;
+    }
+
+    /* Auth modal */
+    .auth-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(6px); z-index: 100; display: flex; align-items: center; justify-content: center; }
+    .auth-overlay.hidden { display: none; }
+    .auth-modal { background: rgba(30,5,50,0.95); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 32px; width: 340px; position: relative; box-shadow: 0 24px 80px rgba(0,0,0,0.6); }
+    .auth-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: rgba(255,255,255,0.35); font-size: 16px; cursor: pointer; }
+    .auth-close:hover { color: #fff; }
+    .auth-tabs { display: flex; gap: 4px; margin-bottom: 24px; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 4px; }
+    .auth-tab { flex: 1; background: none; border: none; color: rgba(255,255,255,0.45); font-size: 13px; font-weight: 500; padding: 8px; border-radius: 8px; cursor: pointer; transition: background 0.15s, color 0.15s; }
+    .auth-tab.active { background: rgba(255,255,255,0.12); color: #fff; }
+    .auth-input { display: block; width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px; padding: 11px 14px; margin-bottom: 12px; outline: none; font-family: "Roboto", sans-serif; }
+    .auth-input:focus { border-color: rgba(255,255,255,0.35); }
+    .auth-input::placeholder { color: rgba(255,255,255,0.25); }
+    .auth-submit { width: 100%; background: #fff; color: #1a0028; font-weight: 700; font-size: 14px; padding: 12px; border: none; border-radius: 10px; cursor: pointer; margin-top: 4px; }
+    .auth-submit:hover { opacity: 0.9; }
+    .auth-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+    .auth-pane.hidden { display: none; }
+    .auth-status { margin-top: 14px; font-size: 13px; padding: 10px 14px; border-radius: 8px; text-align: center; }
+    .auth-status.hidden { display: none; }
+    .auth-status.error { background: rgba(255,31,113,0.15); color: #ff6b9d; }
+    .auth-status.success { background: rgba(30,255,69,0.1); color: #1eff45; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding: 32px 48px;
+      text-align: center;
+      color: rgba(255,255,255,0.25);
+      font-size: 13px;
+    }
+  </style>
 </head>
 <body>
-
-  <nav class="theme-nav left">
-    <button class="nav-btn" id="prev-btn">&#8592;</button>
-    <span class="theme-label" id="theme-label-left"></span>
-  </nav>
-
-  <nav class="theme-nav right">
-    <button class="nav-btn" id="next-btn">&#8594;</button>
-    <span class="theme-label" id="theme-label-right"></span>
-  </nav>
-
-  <div id="animals-bg">
-    <span class="animal a1">🦁</span>
-    <span class="animal a2">🐼</span>
-    <span class="animal a3">🦊</span>
-    <span class="animal a4">🐸</span>
-    <span class="animal a5">🦋</span>
-    <span class="animal a6">🐮</span>
-    <span class="animal a7">🐷</span>
-    <span class="animal a8">🦒</span>
-    <span class="animal a9">🐘</span>
-    <span class="animal a10">🦄</span>
-    <span class="animal a11">🐬</span>
-    <span class="animal a12">🦆</span>
-    <span class="animal a13">🐙</span>
-    <span class="animal a14">🐢</span>
-  </div>
 
   <div class="bg-blobs">
     <div class="blob blob1"></div>
@@ -41,60 +651,335 @@
     <div class="blob blob4"></div>
     <div class="blob blob5"></div>
   </div>
+  <div class="dot-grid"></div>
 
-  <div class="grid-wrapper">
-    <div id="master-bar"><div id="master-bar-fill"></div></div>
+  <div class="page">
 
-    <div class="grid-with-knobs">
-      <div class="knob-col-wrap">
-        <span class="knob-col-label">VOL</span>
-        <div class="knob-col" id="vol-knobs"></div>
+    <nav>
+      <span class="logo">Launchpad</span>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <a href="#" class="nav-login" id="nav-login-btn">Log in</a>
+        <a href="#" id="nav-logout-btn" style="display:none;font-size:12px;color:rgba(255,255,255,0.35);text-decoration:none;letter-spacing:0.5px;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">Log out</a>
       </div>
+    </nav>
 
-      <div class="container">
-        <!-- Row 1 -->
-        <div class="btn" id="btn1"><a></a></div>
-        <div class="btn" id="btn2"><a></a></div>
-        <div class="btn" id="btn3"><a></a></div>
-        <div class="btn" id="btn4"><a></a></div>
-        <div class="btn" id="btn5"><a></a></div>
-
-        <!-- Row 2 -->
-        <div class="btn" id="btn6"><a></a></div>
-        <div class="btn" id="btn7"><a></a></div>
-        <div class="btn" id="btn8"><a></a></div>
-        <div class="btn" id="btn9"><a></a></div>
-        <div class="btn" id="btn10"><a></a></div>
-
-        <!-- Row 3 -->
-        <div class="btn" id="btn11"><a></a></div>
-        <div class="btn" id="btn12"><a></a></div>
-        <div class="btn" id="btn13"><a></a></div>
-        <div class="btn" id="btn14"><a></a></div>
-        <div class="btn" id="btn15"><a></a></div>
-
-        <!-- Row 4 -->
-        <div class="btn" id="btn16"><a></a></div>
-        <div class="btn" id="btn17"><a></a></div>
-        <div class="btn" id="btn18"><a></a></div>
-        <div class="btn" id="btn19"><a></a></div>
-        <div class="btn" id="btn20"><a></a></div>
-
-        <!-- Row 5 -->
-        <div class="btn" id="btn21"><a></a></div>
-        <div class="btn" id="btn22"><a></a></div>
-        <div class="btn" id="btn23"><a></a></div>
-        <div class="btn" id="btn24"><a></a></div>
-        <div class="btn" id="btn25"><a></a></div>
+    <section class="hero">
+      <span class="hero-label" id="hero-label">Browser-based beat maker</span>
+      <h1>Play themed<br><span>audio sets.</span></h1>
+      <p>Layer loops from curated sound packs and have fun — entirely in your browser. No downloads, no setup.</p>
+      <div class="cta-group">
+        <a href="app.html" class="btn-primary" id="hero-play-btn">▶ Play Free</a>
+        <a href="#packs" class="btn-secondary" id="hero-browse-btn">Explore Sound Packs →</a>
       </div>
+    </section>
 
-      <div class="knob-col-wrap">
-        <span class="knob-col-label">LP</span>
-        <div class="knob-col" id="filter-knobs"></div>
+    <div class="pad-preview">
+      <div class="pad-mock" id="pad-mock"></div>
+    </div>
+
+    <section class="section" id="packs">
+      <div class="section-header">
+        <h2>Expand your sound library</h2>
+        <p>Each pack adds 25 new loops to the pad — crafted for a specific sound and mood.</p>
+      </div>
+      <div class="packs-grid">
+        <div class="pack-card c1">
+          <span class="pack-badge">FREE</span>
+          <span class="pack-tag">Starter</span>
+          <h3>Default Pack</h3>
+          <p>The pack that ships with the app. Drums, bass, and synths to get you going.</p>
+          <div class="pack-dots">
+            <div class="pack-dot" style="background:var(--c1)"></div>
+            <div class="pack-dot" style="background:var(--c2)"></div>
+            <div class="pack-dot" style="background:var(--c3)"></div>
+          </div>
+        </div>
+        <div class="pack-card c2">
+          <span class="pack-tag">Electronic</span>
+          <h3>Deep House</h3>
+          <p>Four-on-the-floor kicks, warm chords, and rolling basslines at 124 BPM.</p>
+          <div class="pack-dots">
+            <div class="pack-dot" style="background:var(--c2)"></div>
+            <div class="pack-dot" style="background:var(--c3)"></div>
+          </div>
+        </div>
+        <div class="pack-card c3">
+          <span class="pack-tag">Hip-Hop</span>
+          <h3>Boom Bap</h3>
+          <p>Classic breaks, dusty samples, and punchy snares. Lo-fi feel, high-fi execution.</p>
+          <div class="pack-dots">
+            <div class="pack-dot" style="background:var(--c4)"></div>
+            <div class="pack-dot" style="background:var(--c1)"></div>
+          </div>
+        </div>
+        <div class="pack-card c4">
+          <span class="pack-tag">Kids &amp; Family</span>
+          <h3>Animal Beats 🐘</h3>
+          <p>Fun animal sounds and playful loops — made for little ones to explore rhythm and music.</p>
+          <div class="pack-dots" style="font-size:18px; gap:8px; display:flex">
+            🦁 🐸 🐼 🦋
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="pricing-strip" id="pricing-strip">
+      <div class="pricing-card">
+        <h2>All Sound Packs</h2>
+        <p style="color:rgba(255,255,255,0.45); font-size:14px; margin-top:8px">One subscription, every pack — including future releases.</p>
+        <div class="price"><sup>€</sup>4<sup style="font-size:18px; vertical-align:super">.99</sup></div>
+        <div class="price-period">per month</div>
+        <ul class="pricing-features">
+          <li>Access to all current sound packs</li>
+          <li>New packs added regularly</li>
+          <li>Save and load your sets</li>
+          <li>Cancel any time</li>
+        </ul>
+        <button id="cta-subscribe" class="btn-primary" style="width:100%; justify-content:center; font-size:16px; padding:16px; cursor:pointer; border:none;">Get All Sound Packs</button>
+      </div>
+    </div>
+
+    <footer>
+      © 2025 Launchpad — Make beats in your browser
+    </footer>
+
+  </div>
+
+  <!-- Packs modal -->
+  <div id="packs-overlay" class="packs-overlay hidden">
+    <div class="packs-modal">
+      <div class="packs-modal-header">
+        <h2>Sound Packs</h2>
+        <button class="packs-modal-close" id="packs-close">✕</button>
+      </div>
+      <div class="packs-modal-grid" id="packs-modal-grid">
+        <div style="color:rgba(255,255,255,0.3); font-size:14px;">Loading packs…</div>
       </div>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- Auth modal -->
+  <div id="auth-overlay" class="auth-overlay hidden">
+    <div class="auth-modal">
+      <button id="auth-close" class="auth-close">✕</button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Log in</button>
+        <button class="auth-tab" data-tab="signup">Sign up</button>
+      </div>
+      <div id="auth-login" class="auth-pane">
+        <input type="email" id="login-email" placeholder="Email" class="auth-input">
+        <input type="password" id="login-password" placeholder="Password" class="auth-input">
+        <button id="login-submit" class="auth-submit">Log in</button>
+      </div>
+      <div id="auth-signup" class="auth-pane hidden">
+        <input type="email" id="signup-email" placeholder="Email" class="auth-input">
+        <input type="password" id="signup-password" placeholder="Password (min 6 chars)" class="auth-input">
+        <button id="signup-submit" class="auth-submit">Create account</button>
+      </div>
+      <div id="auth-status" class="auth-status hidden"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://eavorbolhkfdluacjzvl.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_T6YvgNDX-bxjrmNVd199Lw_tBhakmBV';
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const overlay = document.getElementById('auth-overlay');
+    const loginBtn = document.getElementById('nav-login-btn');
+
+    function showStatus(type, msg) {
+      const el = document.getElementById('auth-status');
+      el.className = `auth-status ${type}`;
+      el.textContent = msg;
+    }
+
+    const ctaBtn = document.getElementById('cta-subscribe');
+
+    async function updateUI(session) {
+      const logoutBtn = document.getElementById('nav-logout-btn');
+      if (session) {
+        loginBtn.textContent = session.user.email.split('@')[0];
+        loginBtn.style.pointerEvents = 'none';
+        logoutBtn.style.display = 'block';
+      } else {
+        loginBtn.textContent = 'Log in';
+        loginBtn.style.pointerEvents = '';
+        logoutBtn.style.display = 'none';
+        ctaBtn.textContent = 'Get All Sound Packs';
+        return;
+      }
+
+      const { data } = await db.from('subscribers')
+        .select('status').eq('user_id', session.user.id).maybeSingle();
+
+      const subscribed = data?.status === 'active';
+
+      if (subscribed) {
+        // Nav badge
+        loginBtn.innerHTML = session.user.email.split('@')[0] + '<span class="nav-badge">⭐</span>';
+
+        // Hero
+        document.getElementById('hero-label').textContent = 'All packs unlocked';
+        document.getElementById('hero-play-btn').textContent = '▶ Play';
+        document.getElementById('hero-browse-btn').textContent = 'Browse Packs →';
+
+        // Replace pricing strip with "you're set" card
+        document.getElementById('pricing-strip').innerHTML = `
+          <div class="subscribed-card">
+            <div class="check">⭐</div>
+            <h2>You're all set</h2>
+            <p>All sound packs are unlocked. Jump in and play.</p>
+            <a href="app.html" class="btn-primary" style="display:inline-flex; padding:14px 40px; font-size:15px;">▶ Open App</a>
+          </div>`;
+
+        // CTA button (in pack section)
+        ctaBtn.textContent = '✓ Subscribed — Open App';
+        ctaBtn.onclick = () => window.location.href = 'app.html';
+      } else {
+        ctaBtn.textContent = 'Subscribe — €4.99 / mo';
+        ctaBtn.onclick = () => startCheckout(session);
+      }
+    }
+
+    async function startCheckout(session) {
+      ctaBtn.textContent = 'Loading…';
+      ctaBtn.disabled = true;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      const { url, error } = await res.json();
+      if (url) {
+        window.location.href = url;
+      } else {
+        ctaBtn.textContent = 'Subscribe — €4.99 / mo';
+        ctaBtn.disabled = false;
+        showStatus('error', error || 'Something went wrong');
+      }
+    }
+
+    // CTA button: open login if not logged in
+    ctaBtn.addEventListener('click', async () => {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) overlay.classList.remove('hidden');
+    });
+
+    loginBtn.addEventListener('click', e => {
+      e.preventDefault();
+      overlay.classList.remove('hidden');
+    });
+
+    document.getElementById('nav-logout-btn').addEventListener('click', async e => {
+      e.preventDefault();
+      await db.auth.signOut();
+      document.getElementById('nav-logout-btn').style.display = 'none';
+      updateUI(null);
+    });
+
+    document.getElementById('auth-close').onclick = () => overlay.classList.add('hidden');
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.add('hidden'); });
+
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('auth-login').classList.toggle('hidden', tab.dataset.tab !== 'login');
+        document.getElementById('auth-signup').classList.toggle('hidden', tab.dataset.tab !== 'signup');
+        document.getElementById('auth-status').className = 'auth-status hidden';
+      };
+    });
+
+    document.getElementById('login-submit').onclick = async () => {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('login-submit');
+      btn.disabled = true;
+      const { data, error } = await db.auth.signInWithPassword({ email, password });
+      btn.disabled = false;
+      if (error) return showStatus('error', error.message);
+      overlay.classList.add('hidden');
+      updateUI(data.session);
+    };
+
+    document.getElementById('signup-submit').onclick = async () => {
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const btn = document.getElementById('signup-submit');
+      btn.disabled = true;
+      const { error } = await db.auth.signUp({ email, password });
+      btn.disabled = false;
+      if (error) return showStatus('error', error.message);
+      showStatus('success', 'Check your email to confirm your account.');
+    };
+
+    db.auth.getSession().then(({ data: { session } }) => updateUI(session));
+
+    // Packs modal
+    const packsOverlay = document.getElementById('packs-overlay');
+    document.getElementById('packs-close').onclick = () => packsOverlay.classList.add('hidden');
+    packsOverlay.addEventListener('click', e => { if (e.target === packsOverlay) packsOverlay.classList.add('hidden'); });
+
+    async function openPacksModal() {
+      packsOverlay.classList.remove('hidden');
+      const grid = document.getElementById('packs-modal-grid');
+      grid.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:14px;">Loading packs…</div>';
+
+      const { data: packs } = await db.from('packs').select('*').order('sort_order');
+      if (!packs?.length) { grid.innerHTML = '<div style="color:rgba(255,255,255,0.3)">No packs found.</div>'; return; }
+
+      grid.innerHTML = '';
+      packs.forEach(pack => {
+        const colors = pack.colors || ['#ff1f71','#2db2ff','#1eff45','#ffd500','#ff6a00'];
+        const grad = `linear-gradient(135deg, ${colors[0]}33 0%, ${colors[2]}22 50%, ${colors[4]}33 100%)`;
+        const card = document.createElement('div');
+        card.className = 'pm-card';
+        card.innerHTML = `
+          <div class="pm-card-header" style="background:${grad};">
+            ${pack.is_free ? '<span class="pm-free-badge">Free</span>' : ''}
+            <div class="pm-color-dots">
+              ${colors.map(c => `<div class="pm-dot" style="background:${c};color:${c}"></div>`).join('')}
+            </div>
+          </div>
+          <div class="pm-card-body">
+            <span class="pm-tag">${pack.tag || 'Sound Pack'}</span>
+            <h3>${pack.name}</h3>
+            <p>${pack.description || ''}</p>
+            <a href="app.html" class="pm-play-btn">▶ Play this pack</a>
+          </div>`;
+        grid.appendChild(card);
+      });
+    }
+
+    document.getElementById('hero-browse-btn').addEventListener('click', e => {
+      e.preventDefault();
+      openPacksModal();
+    });
+  </script>
+
+  <script>
+    // Build pad mock with animated lit cells
+    const mock = document.getElementById('pad-mock');
+    const rows = ['r1','r2','r3','r4','r5'];
+    const litCells = new Set([1, 7, 13, 19, 23]);
+    for (let i = 0; i < 25; i++) {
+      const row = rows[Math.floor(i / 5)];
+      const cell = document.createElement('div');
+      cell.className = `pad-cell ${row}${litCells.has(i) ? ' lit' : ''}`;
+      cell.appendChild(document.createElement('a'));
+      mock.appendChild(cell);
+    }
+
+    // Randomly pulse cells
+    setInterval(() => {
+      const cells = mock.querySelectorAll('.pad-cell');
+      const idx = Math.floor(Math.random() * 25);
+      const cell = cells[idx];
+      cell.classList.add('lit');
+      setTimeout(() => cell.classList.remove('lit'), 600);
+    }, 900);
+  </script>
+
 </body>
 </html>

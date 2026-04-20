@@ -2,29 +2,31 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const sounds = {};
 const soundToButton = {};
 
-// Add a new theme here when you have sounds ready.
-// Put the sound files in a folder matching the dir field (e.g. theme2/sound1.wav).
-const themes = [
-	{
-		name: "Theme 1",
-		dir: "",
-		colors: ["#ff1f71", "#2db2ff", "#1eff45", "#ffd500", "#ff6a00"],
-		bg: ["#5d326c", "#350048"]
-	},
-	{
-		name: "Kids",
-		dir: "theme2/",
-		bodyClass: "kids-theme",
-		colors: ["#ff3d6e", "#ffcc00", "#33dd55", "#ff7700", "#22ccff"],
-		bg: ["#1a3a5c", "#0a1f38"]
-	},
-	{
-		name: "Theme 3",
-		dir: "theme3/",
-		colors: ["#00e5ff", "#0080ff", "#00bfff", "#40e0d0", "#006994"],
-		bg: ["#001a2e", "#000d1a"]
-	}
-];
+const SUPABASE_URL = 'https://eavorbolhkfdluacjzvl.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_T6YvgNDX-bxjrmNVd199Lw_tBhakmBV';
+const STORAGE_BASE = `${SUPABASE_URL}/storage/v1/object/public/soundpacks/`;
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let themes = [];
+
+async function fetchThemes() {
+	const { data: packs, error } = await db
+		.from('packs')
+		.select('*, pack_sounds(*)')
+		.order('sort_order');
+
+	if (error) { console.error('Failed to fetch packs', error); return; }
+
+	themes = packs.map(pack => ({
+		name: pack.name,
+		colors: pack.colors,
+		bg: pack.bg,
+		bodyClass: pack.body_class || null,
+		sounds: Object.fromEntries(
+			pack.pack_sounds.map(s => [s.slot, STORAGE_BASE + s.file_path])
+		)
+	}));
+}
 
 let currentThemeIndex = 0;
 
@@ -48,6 +50,7 @@ const rowActive = {
 let masterLoopName = null;
 let masterStartTime = null;
 let masterLoopDuration = null;
+let splitActive = false;
 
 const rowVolumes = { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1 };
 let currentFadeTime = 0;
@@ -85,7 +88,7 @@ function getNextStartTime() {
 		const now = audioCtx.currentTime;
 		const futureStart = now + 0.1; // safety margin
 		masterStartTime = futureStart;
-		masterLoopDuration = bufferDuration;
+		masterLoopDuration = bufferDuration / (splitActive ? 2 : 1);
 		console.log(`[Clock] Initializing master at ${futureStart.toFixed(2)}s (duration: ${bufferDuration}s)`);
 		return futureStart;
 	}
@@ -106,6 +109,7 @@ function startLoop(name, buttonId) {
 	const source = audioCtx.createBufferSource();
 	source.buffer = sound.buffer;
 	source.loop = true;
+	source.loopEnd = sound.buffer.duration / (splitActive ? 2 : 1);
 
 	const row = buttonRows[buttonId];
 	source.connect(rowGains[row]);
@@ -266,11 +270,13 @@ async function loadThemeSounds(theme) {
 	for (let i = 1; i <= 25; i++) {
 		const name = `sound${i}`;
 		const id = `btn${i}`;
+		const url = theme.sounds[i];
+		if (!url) continue;
 		try {
-			await loadSound(name, `${theme.dir}sound${i}.wav`);
+			await loadSound(name, url);
 			soundToButton[name] = id;
 		} catch (e) {
-			console.warn(`[Skip] Could not load ${theme.dir}sound${i}.wav`);
+			console.warn(`[Skip] Could not load slot ${i}`);
 		}
 	}
 }
@@ -291,17 +297,115 @@ async function switchTheme(direction) {
 
 // Load sounds and bind buttons
 window.addEventListener("load", async () => {
+	await fetchThemes();
+	if (themes.length === 0) { console.error('No packs loaded from Supabase'); return; }
+
+	// --- Particle system ---
+	const pCanvas = document.getElementById('particle-canvas');
+	const pCtx = pCanvas.getContext('2d');
+	const pList = [];
+
+	function resizePCanvas() {
+		pCanvas.width = window.innerWidth;
+		pCanvas.height = window.innerHeight;
+	}
+	window.addEventListener('resize', resizePCanvas);
+	resizePCanvas();
+
+	function getThemeColors() {
+		const s = getComputedStyle(document.documentElement);
+		return [1,2,3,4,5].map(i => s.getPropertyValue(`--c${i}`).trim());
+	}
+
+	function triggerBurst(btn) {
+		const rect = btn.getBoundingClientRect();
+		const x = rect.left + rect.width / 2;
+		const y = rect.top + rect.height / 2;
+		const row = buttonRows[btn.id];
+		const color = getThemeColors()[row - 1] || '#fff';
+		for (let i = 0; i < 12; i++) {
+			const angle = Math.random() * Math.PI * 2;
+			const speed = Math.random() * 2.5 + 1;
+			pList.push({
+				x, y,
+				vx: Math.cos(angle) * speed,
+				vy: Math.sin(angle) * speed - 1.5,
+				color,
+				size: Math.random() * 2 + 1,
+				life: 0.55,
+				decay: Math.random() * 0.02 + 0.018,
+				burst: true
+			});
+		}
+	}
+
+	function addAmbient() {
+		if (pList.filter(p => !p.burst).length >= 55) return;
+		const color = getThemeColors()[Math.floor(Math.random() * 5)];
+		pList.push({
+			x: Math.random() * pCanvas.width,
+			y: pCanvas.height + 5,
+			vx: (Math.random() - 0.5) * 0.6,
+			vy: -(Math.random() * 0.7 + 0.25),
+			color,
+			size: Math.random() * 1.8 + 0.4,
+			life: 0.65 + Math.random() * 0.35,
+			decay: 0.0014 + Math.random() * 0.001,
+			burst: false
+		});
+	}
+
+	function animateParticles() {
+		pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+		addAmbient();
+		for (let i = pList.length - 1; i >= 0; i--) {
+			const p = pList[i];
+			p.x += p.vx;
+			p.y += p.vy;
+			if (p.burst) p.vy += 0.14;
+			p.life -= p.decay;
+			if (p.life <= 0 || p.y < -20) { pList.splice(i, 1); continue; }
+			pCtx.save();
+			pCtx.globalAlpha = Math.max(0, p.burst ? p.life : p.life * 0.75);
+			pCtx.fillStyle = p.color;
+			pCtx.shadowBlur = p.burst ? 5 : 5;
+			pCtx.shadowColor = p.color;
+			pCtx.beginPath();
+			pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+			pCtx.fill();
+			pCtx.restore();
+		}
+		requestAnimationFrame(animateParticles);
+	}
+	animateParticles();
+
 	// Bind pad buttons once — they always map soundN → btnN
 	for (let i = 1; i <= 25; i++) {
 		const name = `sound${i}`;
 		const id = `btn${i}`;
 		const btn = document.getElementById(id);
-		if (btn) btn.onclick = () => toggleLoop(name, id);
+		if (btn) btn.onclick = () => { toggleLoop(name, id); triggerBurst(btn); };
 	}
 
 	// Bind nav buttons
 	document.getElementById('prev-btn').onclick = () => switchTheme(-1);
 	document.getElementById('next-btn').onclick = () => switchTheme(1);
+
+	// Split toggle
+	document.getElementById('split-btn').onclick = () => {
+		splitActive = !splitActive;
+		document.getElementById('split-btn').classList.toggle('active', splitActive);
+		const divisor = splitActive ? 2 : 1;
+		for (const row of Object.values(rowActive)) {
+			if (row) {
+				const sound = sounds[row.name];
+				if (sound?.source) sound.source.loopEnd = sound.source.buffer.duration / divisor;
+			}
+		}
+		if (masterLoopDuration) masterLoopDuration = splitActive
+			? masterLoopDuration / 2
+			: masterLoopDuration * 2;
+	};
 
 	// Load initial theme
 	applyThemeColors(themes[0]);
@@ -404,4 +508,113 @@ window.addEventListener("load", async () => {
 	}
 
 	requestAnimationFrame(updateProgressBars);
+
+	// --- Auth UI ---
+	const authOverlay = document.getElementById('auth-overlay');
+	const authBtn     = document.getElementById('auth-btn');
+
+	function setAuthBtn(session) {
+		const logoutBtn = document.getElementById('logout-btn');
+		if (session) {
+			authBtn.textContent = session.user.email.split('@')[0];
+			authBtn.classList.add('logged-in');
+			logoutBtn.classList.remove('hidden');
+		} else {
+			authBtn.textContent = 'Log in';
+			authBtn.classList.remove('logged-in');
+			logoutBtn.classList.add('hidden');
+		}
+	}
+
+	document.getElementById('logout-btn').onclick = async () => {
+		await db.auth.signOut();
+	};
+
+	function showAuthStatus(type, msg) {
+		const el = document.getElementById('auth-status');
+		el.className = `auth-status ${type}`;
+		el.textContent = msg;
+	}
+
+	// Open / close
+	authBtn.onclick = () => authOverlay.classList.remove('hidden');
+	document.getElementById('auth-close').onclick = () => authOverlay.classList.add('hidden');
+	authOverlay.addEventListener('click', e => { if (e.target === authOverlay) authOverlay.classList.add('hidden'); });
+
+	// Tabs
+	document.querySelectorAll('.auth-tab').forEach(tab => {
+		tab.onclick = () => {
+			document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+			tab.classList.add('active');
+			document.getElementById('auth-login').classList.toggle('hidden', tab.dataset.tab !== 'login');
+			document.getElementById('auth-signup').classList.toggle('hidden', tab.dataset.tab !== 'signup');
+			document.getElementById('auth-status').className = 'auth-status hidden';
+		};
+	});
+
+	// Login
+	document.getElementById('login-submit').onclick = async () => {
+		const email    = document.getElementById('login-email').value.trim();
+		const password = document.getElementById('login-password').value;
+		const btn = document.getElementById('login-submit');
+		btn.disabled = true;
+		const { data, error } = await db.auth.signInWithPassword({ email, password });
+		btn.disabled = false;
+		if (error) return showAuthStatus('error', error.message);
+		setAuthBtn(data.session);
+		authOverlay.classList.add('hidden');
+	};
+
+	// Sign up
+	document.getElementById('signup-submit').onclick = async () => {
+		const email    = document.getElementById('signup-email').value.trim();
+		const password = document.getElementById('signup-password').value;
+		const btn = document.getElementById('signup-submit');
+		btn.disabled = true;
+		const { error } = await db.auth.signUp({ email, password });
+		btn.disabled = false;
+		if (error) return showAuthStatus('error', error.message);
+		showAuthStatus('success', 'Check your email to confirm your account.');
+	};
+
+	// Check subscription status and show/hide subscribe button
+	async function updateSubscribeBtn(session) {
+		const btn = document.getElementById('subscribe-btn');
+		if (!session) { btn.classList.add('hidden'); return; }
+
+		const { data } = await db.from('subscribers').select('status').eq('user_id', session.user.id).maybeSingle();
+		if (data?.status === 'active') {
+			btn.classList.add('hidden');
+		} else {
+			btn.classList.remove('hidden');
+		}
+	}
+
+	// Subscribe button
+	document.getElementById('subscribe-btn').onclick = async () => {
+		const { data: { session } } = await db.auth.refreshSession();
+		if (!session) { authOverlay.classList.remove('hidden'); return; }
+
+		const btn = document.getElementById('subscribe-btn');
+		btn.textContent = 'Loading…';
+		btn.disabled = true;
+
+		const res = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
+			method: 'POST',
+			headers: { 'Authorization': `Bearer ${session.access_token}` }
+		});
+		const { url } = await res.json();
+		if (url) window.location.href = url;
+		else { btn.textContent = 'Get Sound Packs'; btn.disabled = false; }
+	};
+
+	// Restore session on load
+	const { data: { session } } = await db.auth.getSession();
+	setAuthBtn(session);
+	updateSubscribeBtn(session);
+
+	db.auth.onAuthStateChange((_event, session) => {
+		setAuthBtn(session);
+		updateSubscribeBtn(session);
+	});
 });

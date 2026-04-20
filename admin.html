@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Launchpad Admin</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto:wght@400;500&display=swap">
+  <style>
+    :root {
+      --c1: #ff1f71; --c2: #2db2ff; --c3: #1eff45; --c4: #ffd500; --c5: #ff6a00;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "Roboto", sans-serif;
+      background: linear-gradient(160deg, #5d326c 0%, #350048 60%, #0d001a 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    .bg-blobs { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.2; }
+    .blob1 { width: 400px; height: 400px; background: var(--c1); top: -10%; left: -8%; }
+    .blob2 { width: 350px; height: 350px; background: var(--c2); top: 5%; right: -8%; }
+    .blob3 { width: 300px; height: 300px; background: var(--c3); bottom: 10%; left: 8%; }
+
+    .page { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    h1 {
+      font-family: "Poppins", sans-serif;
+      font-weight: 700;
+      font-size: 24px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+      opacity: 0.9;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 32px;
+      backdrop-filter: blur(16px);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-family: "Poppins", sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 24px;
+    }
+
+    .field { margin-bottom: 18px; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 8px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: "Roboto", sans-serif;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    textarea:focus {
+      border-color: rgba(255,255,255,0.35);
+    }
+
+    textarea { resize: vertical; min-height: 72px; }
+
+    .color-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .color-field {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .color-field span {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+    }
+
+    input[type="color"] {
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      background: none;
+      cursor: pointer;
+      padding: 2px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.15);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle input:checked + .toggle-slider { background: var(--c3); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    .toggle-label { font-size: 14px; color: rgba(255,255,255,0.7); }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 36px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .drop-zone p { color: rgba(255,255,255,0.45); font-size: 14px; margin-bottom: 6px; }
+    .drop-zone small { color: rgba(255,255,255,0.25); font-size: 12px; }
+
+    #file-input { display: none; }
+
+    /* File list */
+    .file-list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+
+    .file-slot {
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.35);
+      width: 48px;
+      flex-shrink: 0;
+    }
+
+    .file-name { font-size: 13px; color: rgba(255,255,255,0.7); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .file-remove {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.3);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0 4px;
+      transition: color 0.15s;
+    }
+    .file-remove:hover { color: var(--c1); }
+
+    .slot-input {
+      width: 52px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 7px;
+      color: #fff;
+      font-size: 13px;
+      padding: 5px 8px;
+      outline: none;
+      text-align: center;
+    }
+
+    /* Progress */
+    .progress-wrap { margin-top: 16px; display: none; }
+    .progress-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: var(--c3); border-radius: 2px; transition: width 0.2s; }
+    .progress-label { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 8px; }
+
+    /* Buttons */
+    .btn-primary {
+      background: #fff;
+      color: #1a0028;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      padding: 14px 32px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(255,255,255,0.15);
+      width: 100%;
+    }
+
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,255,255,0.22); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .btn-ghost {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.35);
+      font-size: 13px;
+      cursor: pointer;
+      padding: 4px 0;
+      text-decoration: underline;
+      margin-top: 12px;
+      display: block;
+    }
+
+    .status {
+      margin-top: 16px;
+      font-size: 13px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      display: none;
+    }
+    .status.success { background: rgba(30,255,69,0.1); border: 1px solid rgba(30,255,69,0.25); color: var(--c3); }
+    .status.error   { background: rgba(255,31,113,0.1); border: 1px solid rgba(255,31,113,0.25); color: var(--c1); }
+
+    #login-section, #admin-section { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="bg-blobs">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+</div>
+
+<div class="page">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:40px;">
+    <h1 style="margin-bottom:0;">Launchpad Admin</h1>
+    <a href="index.html" style="font-size:13px; color:rgba(255,255,255,0.35); text-decoration:none; letter-spacing:0.5px;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">← Home</a>
+  </div>
+
+  <!-- Login -->
+  <div id="login-section">
+    <div class="card">
+      <h2>Sign In</h2>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="admin@example.com">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" id="login-btn">Sign In</button>
+      <div class="status" id="login-status"></div>
+    </div>
+  </div>
+
+  <!-- Admin panel -->
+  <div id="admin-section">
+
+    <div class="card">
+      <h2>Pack Info</h2>
+      <div class="field">
+        <label>Pack Name</label>
+        <input type="text" id="pack-name" placeholder="e.g. Deep House">
+      </div>
+      <div class="field">
+        <label>Tag</label>
+        <input type="text" id="pack-tag" placeholder="e.g. Electronic">
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea id="pack-desc" placeholder="Short description shown on the landing page"></textarea>
+      </div>
+      <div class="field toggle-row">
+        <label class="toggle">
+          <input type="checkbox" id="pack-free" checked>
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label">Free pack (no subscription needed)</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Row Colors</h2>
+      <div class="color-row">
+        <div class="color-field"><input type="color" id="c1" value="#ff1f71"><span>Row 1</span></div>
+        <div class="color-field"><input type="color" id="c2" value="#2db2ff"><span>Row 2</span></div>
+        <div class="color-field"><input type="color" id="c3" value="#1eff45"><span>Row 3</span></div>
+        <div class="color-field"><input type="color" id="c4" value="#ffd500"><span>Row 4</span></div>
+        <div class="color-field"><input type="color" id="c5" value="#ff6a00"><span>Row 5</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Background Colors</h2>
+      <div class="color-row">
+        <div class="color-field"><input type="color" id="bg1" value="#5d326c"><span>Top</span></div>
+        <div class="color-field"><input type="color" id="bg2" value="#350048"><span>Bottom</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Sound Files</h2>
+      <div class="drop-zone" id="drop-zone">
+        <p>Drop .wav or .mp3 files here</p>
+        <small>Name files sound1.wav – sound25.wav for auto slot detection</small>
+      </div>
+      <input type="file" id="file-input" multiple accept=".wav,.mp3,.ogg">
+      <div class="file-list" id="file-list"></div>
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="progress-label" id="progress-label"></div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="upload-btn">Create Pack</button>
+    <div class="status" id="upload-status"></div>
+    <button class="btn-ghost" id="logout-btn">Sign out</button>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://eavorbolhkfdluacjzvl.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_T6YvgNDX-bxjrmNVd199Lw_tBhakmBV';
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // --- Auth state ---
+  async function init() {
+    const { data: { session } } = await db.auth.getSession();
+    showSection(!!session);
+  }
+
+  function showSection(loggedIn) {
+    document.getElementById('login-section').style.display = loggedIn ? 'none' : 'block';
+    document.getElementById('admin-section').style.display = loggedIn ? 'block' : 'none';
+  }
+
+  // --- Login ---
+  document.getElementById('login-btn').onclick = async () => {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const status = document.getElementById('login-status');
+
+    const { error } = await db.auth.signInWithPassword({ email, password });
+    if (error) {
+      showStatus(status, 'error', error.message);
+    } else {
+      showSection(true);
+    }
+  };
+
+  document.getElementById('logout-btn').onclick = async () => {
+    await db.auth.signOut();
+    showSection(false);
+  };
+
+  // --- File handling ---
+  const fileMap = {}; // slot -> File
+
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  dropZone.onclick = () => fileInput.click();
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    addFiles([...e.dataTransfer.files]);
+  });
+
+  fileInput.onchange = () => addFiles([...fileInput.files]);
+
+  function parseSlot(filename) {
+    const m = filename.match(/(\d+)/);
+    return m ? parseInt(m[1]) : null;
+  }
+
+  function addFiles(files) {
+    files.forEach(file => {
+      const slot = parseSlot(file.name) || (Object.keys(fileMap).length + 1);
+      if (slot >= 1 && slot <= 25) fileMap[slot] = file;
+    });
+    renderFileList();
+  }
+
+  function renderFileList() {
+    const list = document.getElementById('file-list');
+    list.innerHTML = '';
+    Object.keys(fileMap).sort((a,b) => a-b).forEach(slot => {
+      const file = fileMap[slot];
+      const item = document.createElement('div');
+      item.className = 'file-item';
+      item.innerHTML = `
+        <span class="file-slot">Slot ${slot}</span>
+        <input class="slot-input" type="number" min="1" max="25" value="${slot}" data-old="${slot}">
+        <span class="file-name">${file.name}</span>
+        <button class="file-remove" data-slot="${slot}">✕</button>
+      `;
+      list.appendChild(item);
+    });
+
+    list.querySelectorAll('.file-remove').forEach(btn => {
+      btn.onclick = () => { delete fileMap[btn.dataset.slot]; renderFileList(); };
+    });
+
+    list.querySelectorAll('.slot-input').forEach(input => {
+      input.onchange = () => {
+        const oldSlot = input.dataset.old;
+        const newSlot = parseInt(input.value);
+        if (newSlot >= 1 && newSlot <= 25 && oldSlot !== String(newSlot)) {
+          fileMap[newSlot] = fileMap[oldSlot];
+          delete fileMap[oldSlot];
+          renderFileList();
+        }
+      };
+    });
+  }
+
+  // --- Upload ---
+  document.getElementById('upload-btn').onclick = async () => {
+    const name = document.getElementById('pack-name').value.trim();
+    if (!name) return showStatus(document.getElementById('upload-status'), 'error', 'Pack name is required.');
+    if (Object.keys(fileMap).length === 0) return showStatus(document.getElementById('upload-status'), 'error', 'Add at least one sound file.');
+
+    const btn = document.getElementById('upload-btn');
+    btn.disabled = true;
+
+    const colors = ['c1','c2','c3','c4','c5'].map(id => document.getElementById(id).value);
+    const bg = ['bg1','bg2'].map(id => document.getElementById(id).value);
+
+    // Insert pack
+    const { data: pack, error: packErr } = await db.from('packs').insert({
+      name,
+      description: document.getElementById('pack-desc').value.trim(),
+      tag: document.getElementById('pack-tag').value.trim(),
+      colors,
+      bg,
+      is_free: document.getElementById('pack-free').checked
+    }).select().single();
+
+    if (packErr) {
+      btn.disabled = false;
+      return showStatus(document.getElementById('upload-status'), 'error', packErr.message);
+    }
+
+    // Upload files + insert pack_sounds
+    const slots = Object.keys(fileMap).sort((a,b) => a-b);
+    const progressWrap = document.getElementById('progress-wrap');
+    const progressFill = document.getElementById('progress-fill');
+    const progressLabel = document.getElementById('progress-label');
+    progressWrap.style.display = 'block';
+
+    for (let i = 0; i < slots.length; i++) {
+      const slot = slots[i];
+      const file = fileMap[slot];
+      const ext = file.name.split('.').pop();
+      const filePath = `${pack.id}/sound${slot}.${ext}`;
+
+      progressLabel.textContent = `Uploading slot ${slot} (${i+1}/${slots.length})…`;
+      progressFill.style.width = `${((i) / slots.length) * 100}%`;
+
+      const { error: uploadErr } = await db.storage.from('soundpacks').upload(filePath, file);
+      if (uploadErr) {
+        btn.disabled = false;
+        return showStatus(document.getElementById('upload-status'), 'error', `Slot ${slot}: ${uploadErr.message}`);
+      }
+
+      await db.from('pack_sounds').insert({ pack_id: pack.id, slot: parseInt(slot), file_path: filePath });
+    }
+
+    progressFill.style.width = '100%';
+    progressLabel.textContent = 'Done!';
+    btn.disabled = false;
+
+    // Reset form
+    Object.keys(fileMap).forEach(k => delete fileMap[k]);
+    renderFileList();
+    document.getElementById('pack-name').value = '';
+    document.getElementById('pack-desc').value = '';
+    document.getElementById('pack-tag').value = '';
+
+    showStatus(document.getElementById('upload-status'), 'success', `Pack "${name}" created with ${slots.length} sounds.`);
+  };
+
+  function showStatus(el, type, msg) {
+    el.className = `status ${type}`;
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  init();
+</script>
+</body>
+</html>
