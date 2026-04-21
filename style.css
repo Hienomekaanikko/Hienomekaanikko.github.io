@@ -6,8 +6,8 @@
   --c3: #1eff45;
   --c4: #ffd500;
   --c5: #ff6a00;
-  --bg-top: #5d326c;
-  --bg-bottom: #350048;
+  --bg-top: #0f0a03;
+  --bg-bottom: #050300;
 }
 
 * {
@@ -40,7 +40,7 @@ body {
   position: absolute;
   border-radius: 50%;
   filter: blur(80px);
-  opacity: 0.35;
+  opacity: 0.5;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
   animation-direction: alternate;
@@ -174,7 +174,7 @@ body {
 .auth-overlay.hidden { display: none; }
 
 .auth-modal {
-  background: rgba(30,5,50,0.95);
+  background: rgba(12,8,2,0.97);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 20px;
   padding: 32px;
@@ -568,6 +568,13 @@ body {
   z-index: 0;
   opacity: 0;
   transition: opacity 0.6s ease;
+}
+
+body.theme-1 {
+  background-image: url('assets/theme1-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 
 body.kids-theme #animals-bg {
