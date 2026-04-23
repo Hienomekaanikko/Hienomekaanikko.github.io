@@ -53,6 +53,10 @@ const rowActive = {
 	5: null
 };
 
+// Stutter state per row: depth = saved divisor (4/8/16), mode = 0 (off) or active divisor
+const rowStutter = { 1: { mode: 0, depth: 4, source: null }, 2: { mode: 0, depth: 4, source: null }, 3: { mode: 0, depth: 4, source: null }, 4: { mode: 0, depth: 4, source: null }, 5: { mode: 0, depth: 4, source: null } };
+const STUTTER_DEPTHS = [4, 8, 16];
+
 let masterLoopName = null;
 let masterStartTime = null;
 let masterLoopDuration = null;
@@ -209,6 +213,16 @@ function toggleLoop(name, buttonId) {
 	}
 
 	const row = buttonRows[buttonId];
+
+	// Clear any active stutter for this row before switching sounds
+	if (rowStutter[row].mode !== 0) {
+		const st = rowStutter[row];
+		if (st.source) { try { st.source.stop(); } catch (e) {} st.source = null; }
+		st.mode = 0;
+		const stutterBtn = document.getElementById(`stutter-btn-${row}`);
+		if (stutterBtn) { stutterBtn.textContent = 'STU'; stutterBtn.classList.remove('stutter-active'); }
+	}
+
 	const current = rowActive[row];
 
 	// If something is already playing in this row, stop it first
@@ -265,6 +279,15 @@ function updateThemeLabels() {
 }
 
 async function loadThemeSounds(theme) {
+	// Clear all stutter sources
+	for (let r = 1; r <= 5; r++) {
+		const st = rowStutter[r];
+		if (st.source) { try { st.source.stop(); } catch (e) {} st.source = null; }
+		st.mode = 0;
+		const btn = document.getElementById(`stutter-btn-${r}`);
+		if (btn) { btn.textContent = 'STU'; btn.classList.remove('stutter-active'); }
+	}
+
 	// Stop and clear all active sounds
 	for (const name of Object.keys(sounds)) {
 		if (sounds[name]?.source) stopLoop(name, true);
@@ -289,6 +312,79 @@ async function loadThemeSounds(theme) {
 			console.warn(`[Skip] Could not load slot ${i}`);
 		}
 	}
+}
+
+function startStutter(row, divisor) {
+	const active = rowActive[row];
+	if (!active) return;
+	const sound = sounds[active.name];
+	if (!sound?.buffer) return;
+
+	// Stop any existing stutter source immediately
+	const st = rowStutter[row];
+	if (st.source) { try { st.source.stop(); } catch (e) {} st.source = null; }
+
+	const bufDur = sound.buffer.duration / (splitActive ? 2 : 1);
+	const loopLen = bufDur / divisor;
+
+	const startTime = getNextStartTime();
+
+	// Stop regular source exactly when stutter begins
+	if (sound.source) { sound.source.stop(startTime); sound.source = null; }
+
+	const src = audioCtx.createBufferSource();
+	src.buffer = sound.buffer;
+	src.loop = true;
+	src.loopStart = 0;
+	src.loopEnd = loopLen;
+	src.connect(rowGains[row]);
+	src.start(startTime);
+	st.source = src;
+}
+
+function releaseStutter(row) {
+	const st = rowStutter[row];
+	if (st.source) { try { st.source.stop(); } catch (e) {} st.source = null; }
+	st.mode = 0;
+
+	const active = rowActive[row];
+	if (active) startLoop(active.name, active.buttonId);
+
+	updateStutterBtn(row);
+}
+
+function updateStutterBtn(row) {
+	const st = rowStutter[row];
+	const btn = document.getElementById(`stutter-btn-${row}`);
+	if (!btn) return;
+	btn.textContent = `1/${st.depth}`;
+	btn.classList.toggle('stutter-active', st.mode !== 0);
+}
+
+// Short tap: toggle stutter on/off at current depth
+function tapStutter(row) {
+	if (audioCtx.state === 'suspended') audioCtx.resume();
+	const st = rowStutter[row];
+	if (st.mode !== 0) {
+		releaseStutter(row);
+	} else {
+		startStutter(row, st.depth);
+		st.mode = st.depth;
+		updateStutterBtn(row);
+	}
+}
+
+// Long press: cycle depth without changing on/off state
+function cycleStutterDepth(row) {
+	const st = rowStutter[row];
+	const idx = STUTTER_DEPTHS.indexOf(st.depth);
+	st.depth = STUTTER_DEPTHS[(idx + 1) % STUTTER_DEPTHS.length];
+	// If stutter is currently active, apply new depth immediately
+	if (st.mode !== 0) {
+		st.mode = st.depth;
+		startStutter(row, st.depth);
+	}
+	updateStutterBtn(row);
 }
 
 let themeOverlay = null;
@@ -556,6 +652,38 @@ window.addEventListener("load", async () => {
 				updateKnobVisual(filterWrap, v);
 			}
 		);
+	}
+
+	// Build stutter buttons (short tap = toggle, long press = cycle depth)
+	const stutterCol = document.getElementById('stutter-btns');
+	for (let row = 1; row <= 5; row++) {
+		const btn = document.createElement('button');
+		btn.id = `stutter-btn-${row}`;
+		btn.className = 'stutter-btn';
+		btn.textContent = '1/4';
+
+		let longPressTimer = null;
+		let didLongPress = false;
+
+		const onDown = () => {
+			didLongPress = false;
+			longPressTimer = setTimeout(() => {
+				didLongPress = true;
+				cycleStutterDepth(row);
+			}, 350);
+		};
+		const onUp = () => {
+			clearTimeout(longPressTimer);
+			if (!didLongPress) tapStutter(row);
+		};
+
+		btn.addEventListener('mousedown', onDown);
+		btn.addEventListener('mouseup', onUp);
+		btn.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
+		btn.addEventListener('touchstart', e => { e.preventDefault(); onDown(); }, { passive: false });
+		btn.addEventListener('touchend', e => { e.preventDefault(); onUp(); }, { passive: false });
+
+		stutterCol.appendChild(btn);
 	}
 
 	requestAnimationFrame(updateProgressBars);
