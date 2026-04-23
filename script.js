@@ -374,15 +374,21 @@ function tapStutter(row) {
 	}
 }
 
-// Long press: cycle depth without changing on/off state
+// Single tap: cycle depth — update loopEnd live if stutter is running (no stop/restart)
 function cycleStutterDepth(row) {
 	const st = rowStutter[row];
 	const idx = STUTTER_DEPTHS.indexOf(st.depth);
 	st.depth = STUTTER_DEPTHS[(idx + 1) % STUTTER_DEPTHS.length];
-	// If stutter is currently active, apply new depth immediately
 	if (st.mode !== 0) {
 		st.mode = st.depth;
-		startStutter(row, st.depth);
+		const active = rowActive[row];
+		if (active && st.source) {
+			const sound = sounds[active.name];
+			if (sound?.buffer) {
+				const bufDur = sound.buffer.duration / (splitActive ? 2 : 1);
+				st.source.loopEnd = bufDur / st.depth;
+			}
+		}
 	}
 	updateStutterBtn(row);
 }
@@ -654,7 +660,7 @@ window.addEventListener("load", async () => {
 		);
 	}
 
-	// Build stutter buttons (short tap = toggle, long press = cycle depth)
+	// Build stutter buttons (single tap = cycle depth, double tap = toggle on/off)
 	const stutterCol = document.getElementById('stutter-btns');
 	for (let row = 1; row <= 5; row++) {
 		const btn = document.createElement('button');
@@ -662,26 +668,22 @@ window.addEventListener("load", async () => {
 		btn.className = 'stutter-btn';
 		btn.textContent = '1/4';
 
-		let longPressTimer = null;
-		let didLongPress = false;
+		let tapCount = 0;
+		let tapTimer = null;
 
-		const onDown = () => {
-			didLongPress = false;
-			longPressTimer = setTimeout(() => {
-				didLongPress = true;
-				cycleStutterDepth(row);
-			}, 350);
-		};
-		const onUp = () => {
-			clearTimeout(longPressTimer);
-			if (!didLongPress) tapStutter(row);
+		const onTap = () => {
+			if (audioCtx.state === 'suspended') audioCtx.resume();
+			tapCount++;
+			clearTimeout(tapTimer);
+			tapTimer = setTimeout(() => {
+				if (tapCount === 1) cycleStutterDepth(row);
+				else tapStutter(row);
+				tapCount = 0;
+			}, 280);
 		};
 
-		btn.addEventListener('mousedown', onDown);
-		btn.addEventListener('mouseup', onUp);
-		btn.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
-		btn.addEventListener('touchstart', e => { e.preventDefault(); onDown(); }, { passive: false });
-		btn.addEventListener('touchend', e => { e.preventDefault(); onUp(); }, { passive: false });
+		btn.addEventListener('click', onTap);
+		btn.addEventListener('touchend', e => { e.preventDefault(); onTap(); }, { passive: false });
 
 		stutterCol.appendChild(btn);
 	}
