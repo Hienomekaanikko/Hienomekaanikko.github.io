@@ -7,14 +7,21 @@
 </head>
 <body>
 
+  <div id="loader" style="position:fixed;inset:0;background:#050300;z-index:9999;transition:opacity 0.3s ease;pointer-events:none;"></div>
+
   <a href="index.html" class="home-btn">← Home</a>
 
   <!-- Auth + subscribe buttons -->
   <div id="auth-btn-wrap">
     <button id="subscribe-btn" class="auth-btn subscribe-btn hidden">Get Sound Packs</button>
+    <button id="edit-btn" class="auth-btn hidden">Edit Pack</button>
     <button id="auth-btn" class="auth-btn">Log in</button>
     <button id="logout-btn" class="auth-btn logout-btn hidden">Log out</button>
   </div>
+
+  <input type="file" id="slot-file-input" accept=".wav,.mp3,.ogg" style="display:none">
+  <input type="file" id="bg-file-input" accept="image/jpeg,image/png,image/webp" style="display:none">
+  <button id="change-bg-btn" class="auth-btn hidden">Change BG</button>
 
   <!-- Auth modal -->
   <div id="auth-overlay" class="auth-overlay hidden">

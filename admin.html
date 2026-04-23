@@ -352,6 +352,19 @@
     </div>
 
     <div class="card">
+      <h2>Background Image</h2>
+      <div class="drop-zone" id="bg-drop-zone">
+        <p>Drop a background image here</p>
+        <small>JPG, PNG or WebP — shown behind the launchpad for this theme</small>
+      </div>
+      <input type="file" id="bg-file-input" accept="image/jpeg,image/png,image/webp">
+      <div id="bg-preview" style="margin-top:12px;display:none;">
+        <img id="bg-preview-img" style="width:100%;border-radius:10px;max-height:160px;object-fit:cover;">
+        <button class="file-remove" id="bg-remove" style="margin-top:8px;font-size:13px;color:rgba(255,255,255,0.4);">✕ Remove image</button>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>Sound Files</h2>
       <div class="drop-zone" id="drop-zone">
         <p>Drop .wav or .mp3 files here</p>
@@ -407,6 +420,28 @@
     await db.auth.signOut();
     showSection(false);
   };
+
+  // --- Background image handling ---
+  let bgFile = null;
+
+  const bgDrop = document.getElementById('bg-drop-zone');
+  const bgInput = document.getElementById('bg-file-input');
+
+  bgDrop.onclick = () => bgInput.click();
+  bgDrop.addEventListener('dragover', e => { e.preventDefault(); bgDrop.classList.add('drag-over'); });
+  bgDrop.addEventListener('dragleave', () => bgDrop.classList.remove('drag-over'));
+  bgDrop.addEventListener('drop', e => { e.preventDefault(); bgDrop.classList.remove('drag-over'); setBgFile(e.dataTransfer.files[0]); });
+  bgInput.onchange = () => setBgFile(bgInput.files[0]);
+  document.getElementById('bg-remove').onclick = () => { bgFile = null; document.getElementById('bg-preview').style.display = 'none'; bgDrop.style.display = ''; };
+
+  function setBgFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    bgFile = file;
+    const preview = document.getElementById('bg-preview');
+    document.getElementById('bg-preview-img').src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+    bgDrop.style.display = 'none';
+  }
 
   // --- File handling ---
   const fileMap = {}; // slot -> File
@@ -499,6 +534,17 @@
       return showStatus(document.getElementById('upload-status'), 'error', packErr.message);
     }
 
+    // Upload background image if provided
+    if (bgFile) {
+      const ext = bgFile.name.split('.').pop();
+      const bgPath = `${pack.id}/bg.${ext}`;
+      const { error: bgErr } = await db.storage.from('soundpacks').upload(bgPath, bgFile);
+      if (!bgErr) {
+        const bgUrl = `${SUPABASE_URL}/storage/v1/object/public/soundpacks/${bgPath}`;
+        await db.from('packs').update({ bg_image: bgUrl }).eq('id', pack.id);
+      }
+    }
+
     // Upload files + insert pack_sounds
     const slots = Object.keys(fileMap).sort((a,b) => a-b);
     const progressWrap = document.getElementById('progress-wrap');
@@ -531,6 +577,9 @@
     // Reset form
     Object.keys(fileMap).forEach(k => delete fileMap[k]);
     renderFileList();
+    bgFile = null;
+    document.getElementById('bg-preview').style.display = 'none';
+    document.getElementById('bg-drop-zone').style.display = '';
     document.getElementById('pack-name').value = '';
     document.getElementById('pack-desc').value = '';
     document.getElementById('pack-tag').value = '';

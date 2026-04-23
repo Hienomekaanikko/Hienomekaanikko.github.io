@@ -2,12 +2,16 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const sounds = {};
 const soundToButton = {};
 
+window.addEventListener('pagehide', () => audioCtx.close());
+window.addEventListener('unload', () => {});
+
 const SUPABASE_URL = 'https://eavorbolhkfdluacjzvl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_T6YvgNDX-bxjrmNVd199Lw_tBhakmBV';
 const STORAGE_BASE = `${SUPABASE_URL}/storage/v1/object/public/soundpacks/`;
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let themes = [];
+const bufferCache = new Map();
 
 async function fetchThemes() {
 	const { data: packs, error } = await db
@@ -18,9 +22,11 @@ async function fetchThemes() {
 	if (error) { console.error('Failed to fetch packs', error); return; }
 
 	themes = packs.map(pack => ({
+		id: pack.id,
 		name: pack.name,
 		colors: pack.colors,
 		bg: pack.bg,
+		bgImage: pack.bg_image || null,
 		bodyClass: pack.body_class || null,
 		sounds: Object.fromEntries(
 			pack.pack_sounds.map(s => [s.slot, STORAGE_BASE + s.file_path])
@@ -72,13 +78,12 @@ for (let r = 1; r <= 5; r++) {
 
 // Load a single sound
 async function loadSound(name, url) {
-	const resp = await fetch(url);
-	const buffer = await resp.arrayBuffer();
-	sounds[name] = {
-		buffer: await audioCtx.decodeAudioData(buffer),
-		source: null,
-		startTimeoutId: null
-	};
+	if (!bufferCache.has(url)) {
+		const resp = await fetch(url);
+		const raw = await resp.arrayBuffer();
+		bufferCache.set(url, await audioCtx.decodeAudioData(raw));
+	}
+	sounds[name] = { buffer: bufferCache.get(url), source: null, startTimeoutId: null };
 }
 
 // Calculate the next "bar" start time for perfect sync
@@ -245,6 +250,11 @@ function applyThemeColors(theme) {
 	// Toggle body classes for theme-specific backgrounds
 	themes.forEach(t => t.bodyClass && document.body.classList.remove(t.bodyClass));
 	if (theme.bodyClass) document.body.classList.add(theme.bodyClass);
+
+	// Apply background image from DB, fall back to gradient
+	document.body.style.backgroundImage = theme.bgImage
+		? `url('${theme.bgImage}')`
+		: '';
 }
 
 function updateThemeLabels() {
@@ -281,17 +291,44 @@ async function loadThemeSounds(theme) {
 	}
 }
 
+let themeOverlay = null;
+function getThemeOverlay() {
+	if (!themeOverlay) {
+		themeOverlay = document.createElement('div');
+		themeOverlay.style.cssText = 'position:fixed;inset:0;background:#050300;z-index:9998;opacity:0;pointer-events:none;';
+		document.body.appendChild(themeOverlay);
+	}
+	return themeOverlay;
+}
+
 async function switchTheme(direction) {
 	const container = document.querySelector('.container');
 	container.classList.add('switching');
 
+	const overlay = getThemeOverlay();
+	overlay.style.transition = 'none';
+	overlay.style.opacity = '1';
+
 	currentThemeIndex = (currentThemeIndex + direction + themes.length) % themes.length;
 	const theme = themes[currentThemeIndex];
 
-	applyThemeColors(theme);
 	updateThemeLabels();
-	await loadThemeSounds(theme);
 
+	// Preload background image before revealing
+	await new Promise(resolve => {
+		if (!theme.bgImage) { applyThemeColors(theme); resolve(); return; }
+		const img = new Image();
+		img.onload = () => { applyThemeColors(theme); resolve(); };
+		img.onerror = () => { applyThemeColors(theme); resolve(); };
+		img.src = theme.bgImage;
+	});
+
+	// Start loading sounds in parallel, then fade out smoothly once bg is ready
+	const soundsPromise = loadThemeSounds(theme);
+	overlay.style.transition = 'opacity 0.4s ease';
+	overlay.style.opacity = '0';
+
+	await soundsPromise;
 	container.classList.remove('switching');
 }
 
@@ -411,6 +448,9 @@ window.addEventListener("load", async () => {
 	applyThemeColors(themes[0]);
 	updateThemeLabels();
 	await loadThemeSounds(themes[0]);
+	const loader = document.getElementById('loader');
+	loader.style.opacity = '0';
+	setTimeout(() => loader.remove(), 300);
 
 	// --- Knob helpers ---
 	const KNOB_TRACK = 'M 10.69 33.31 A 16 16 0 1 1 33.31 33.31';
@@ -467,6 +507,17 @@ window.addEventListener("load", async () => {
 			setValue(Math.max(0, Math.min(100, startVal + (startY - e.clientY))));
 		});
 		window.addEventListener('mouseup', () => { dragging = false; });
+
+		wrap.addEventListener('touchstart', e => {
+			dragging = true; startY = e.touches[0].clientY; startVal = getValue();
+			e.preventDefault();
+		}, { passive: false });
+		window.addEventListener('touchmove', e => {
+			if (!dragging) return;
+			setValue(Math.max(0, Math.min(100, startVal + (startY - e.touches[0].clientY))));
+			e.preventDefault();
+		}, { passive: false });
+		window.addEventListener('touchend', () => { dragging = false; });
 
 		wrap.addEventListener('wheel', e => {
 			e.preventDefault();
@@ -608,13 +659,131 @@ window.addEventListener("load", async () => {
 		else { btn.textContent = 'Get Sound Packs'; btn.disabled = false; }
 	};
 
+	// Edit mode
+	const ADMIN_EMAIL = 'mikesuokas@gmail.com';
+	const editBtn = document.getElementById('edit-btn');
+	const slotFileInput = document.getElementById('slot-file-input');
+	let editMode = false;
+	let pendingSlot = null;
+
+	function setEditVisible(session) {
+		if (session?.user?.email === ADMIN_EMAIL) {
+			editBtn.classList.remove('hidden');
+		} else {
+			editBtn.classList.add('hidden');
+			if (editMode) toggleEditMode();
+		}
+	}
+
+	const changeBgBtn = document.getElementById('change-bg-btn');
+	const bgFileInput = document.getElementById('bg-file-input');
+
+	function toggleEditMode() {
+		editMode = !editMode;
+		document.body.classList.toggle('edit-mode', editMode);
+		editBtn.textContent = editMode ? 'Exit Edit' : 'Edit Pack';
+		editBtn.classList.toggle('edit-btn-active', editMode);
+		changeBgBtn.classList.toggle('hidden', !editMode);
+	}
+
+	changeBgBtn.onclick = () => { bgFileInput.value = ''; bgFileInput.click(); };
+
+	bgFileInput.onchange = async () => {
+		const file = bgFileInput.files[0];
+		if (!file) return;
+		const theme = themes[currentThemeIndex];
+		if (!theme.id) { console.error('No theme id', theme); return; }
+
+		changeBgBtn.textContent = 'Uploading…';
+		changeBgBtn.disabled = true;
+
+		const { data: { session } } = await db.auth.getSession();
+		if (!session) { changeBgBtn.textContent = 'Not logged in'; changeBgBtn.disabled = false; return; }
+
+		const ext = file.name.split('.').pop();
+		const folderName = theme.name.toLowerCase().replace(/\s+/g, '-');
+		const bgPath = `${folderName}/bg.${ext}`;
+
+		const { error: storageErr } = await db.storage.from('soundpacks').upload(bgPath, file, { upsert: true });
+		if (storageErr) {
+			console.error('Storage upload failed:', storageErr);
+			changeBgBtn.textContent = 'Upload failed';
+			changeBgBtn.disabled = false;
+			return;
+		}
+
+		const bgUrl = `${SUPABASE_URL}/storage/v1/object/public/soundpacks/${bgPath}`;
+		const { error: dbErr } = await db.from('packs').update({ bg_image: bgUrl }).eq('id', theme.id);
+		if (dbErr) {
+			console.error('DB update failed:', dbErr);
+			changeBgBtn.textContent = 'DB update failed';
+			changeBgBtn.disabled = false;
+			return;
+		}
+
+		theme.bgImage = bgUrl;
+		document.body.style.backgroundImage = `url('${bgUrl}')`;
+		changeBgBtn.textContent = 'Change BG';
+		changeBgBtn.disabled = false;
+	};
+
+	editBtn.onclick = toggleEditMode;
+
+	// Clicking a pad button in edit mode opens file picker for that slot
+	document.querySelectorAll('.container .btn').forEach(btn => {
+		btn.addEventListener('click', e => {
+			if (!editMode) return;
+			e.stopPropagation();
+			const slot = parseInt(btn.id.replace('btn', ''));
+			pendingSlot = slot;
+			slotFileInput.value = '';
+			slotFileInput.click();
+		}, true);
+	});
+
+	slotFileInput.onchange = async () => {
+		const file = slotFileInput.files[0];
+		if (!file || pendingSlot === null) return;
+
+		const theme = themes[currentThemeIndex];
+		if (!theme.id) return;
+
+		const slot = pendingSlot;
+		pendingSlot = null;
+		const btnEl = document.getElementById(`btn${slot}`);
+		btnEl.classList.add('uploading');
+
+		const ext = file.name.split('.').pop();
+		const filePath = `${theme.id}/sound${slot}.${ext}`;
+
+		// Upload to storage (upsert)
+		const { error: upErr } = await db.storage.from('soundpacks').upload(filePath, file, { upsert: true });
+		if (upErr) { btnEl.classList.remove('uploading'); console.error(upErr); return; }
+
+		// Update or insert pack_sounds row
+		await db.from('pack_sounds').upsert({ pack_id: theme.id, slot, file_path: filePath }, { onConflict: 'pack_id,slot' });
+
+		// Reload sound into buffer
+		const soundName = `sound${slot}`;
+		const url = `${STORAGE_BASE}${filePath}`;
+		bufferCache.delete(url);
+		await loadSound(soundName, url);
+		soundToButton[soundName] = `btn${slot}`;
+
+		btnEl.classList.remove('uploading');
+		btnEl.classList.add('upload-done');
+		setTimeout(() => btnEl.classList.remove('upload-done'), 2000);
+	};
+
 	// Restore session on load
 	const { data: { session } } = await db.auth.getSession();
 	setAuthBtn(session);
 	updateSubscribeBtn(session);
+	setEditVisible(session);
 
 	db.auth.onAuthStateChange((_event, session) => {
 		setAuthBtn(session);
 		updateSubscribeBtn(session);
+		setEditVisible(session);
 	});
 });

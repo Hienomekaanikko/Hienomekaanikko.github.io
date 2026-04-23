@@ -8,20 +8,20 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700&display=swap">
   <style>
     :root {
-      --c1: #ff1f71;
-      --c2: #2db2ff;
-      --c3: #1eff45;
-      --c4: #ffd500;
-      --c5: #ff6a00;
+      --c1: #1a9a8a;
+      --c2: #2a6aad;
+      --c3: #f5c432;
+      --c4: #3ab8d0;
+      --c5: #1a3a6b;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: "Roboto", sans-serif;
-      background: #fffef0;
+      background: url('assets/landing-page.webp') center/cover no-repeat fixed;
       min-height: 100vh;
-      color: #1a1200;
+      color: #1a2a4a;
       overflow-x: hidden;
     }
 
@@ -40,11 +40,11 @@
       opacity: 0.15;
     }
 
-    .blob1 { width: 500px; height: 500px; background: #ff6a00; top: -10%; left: -8%;  animation: drift1  9s infinite alternate ease-in-out; }
-    .blob2 { width: 420px; height: 420px; background: #ffd500; top: 5%;  right: -8%; animation: drift2 11s infinite alternate ease-in-out; }
-    .blob3 { width: 380px; height: 380px; background: #ff1f71; bottom: 10%; left: 8%;  animation: drift3 13s infinite alternate ease-in-out; }
-    .blob4 { width: 340px; height: 340px; background: #fbbf24; bottom: -5%; right: 5%;  animation: drift4 10s infinite alternate ease-in-out; }
-    .blob5 { width: 400px; height: 400px; background: #fb923c; top: 45%; left: 38%;  animation: drift5 14s infinite alternate ease-in-out; }
+    .blob1 { width: 500px; height: 500px; background: #2a6aad; top: -10%; left: -8%;  animation: drift1  9s infinite alternate ease-in-out; }
+    .blob2 { width: 420px; height: 420px; background: #1a9a8a; top: 5%;  right: -8%; animation: drift2 11s infinite alternate ease-in-out; }
+    .blob3 { width: 380px; height: 380px; background: #3ab8d0; bottom: 10%; left: 8%;  animation: drift3 13s infinite alternate ease-in-out; }
+    .blob4 { width: 340px; height: 340px; background: #f5c432; bottom: -5%; right: 5%;  animation: drift4 10s infinite alternate ease-in-out; }
+    .blob5 { width: 400px; height: 400px; background: #1a3a6b; top: 45%; left: 38%;  animation: drift5 14s infinite alternate ease-in-out; }
 
     @keyframes drift1 { from { transform: translate(0,0) scale(1); }    to { transform: translate(60px,80px) scale(1.15); } }
     @keyframes drift2 { from { transform: translate(0,0) scale(1.1); }  to { transform: translate(-70px,60px) scale(0.9); } }
@@ -57,7 +57,7 @@
       inset: 0;
       z-index: 0;
       pointer-events: none;
-      background-image: radial-gradient(circle, rgba(180,120,0,0.1) 1px, transparent 1px);
+      background-image: radial-gradient(circle, rgba(42,106,173,0.12) 1px, transparent 1px);
       background-size: 38px 38px;
       animation: grid-shift 22s linear infinite;
     }
@@ -89,16 +89,17 @@
       font-size: 20px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      background: linear-gradient(90deg, #b45309 0%, #d97706 100%);
+      background: linear-gradient(90deg, #1a9a8a 0%, #2a6aad 100%);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .nav-login {
-      background: rgba(0,0,0,0.04);
-      border: 1px solid rgba(0,0,0,0.12);
+      background: rgba(232,213,188,0.85);
+      border: 1px solid rgba(42,106,173,0.25);
       border-radius: 8px;
-      color: rgba(0,0,0,0.6);
+      color: #1a2a4a;
       font-size: 13px;
       padding: 8px 20px;
       cursor: pointer;
@@ -108,69 +109,189 @@
     }
 
     .nav-login:hover {
-      background: rgba(0,0,0,0.08);
-      color: #1a1200;
+      background: rgba(232,213,188,1);
+      color: #1a2a4a;
     }
 
     /* Hero */
     .hero {
-      text-align: center;
-      padding: 80px 24px 100px;
-      max-width: 760px;
+      position: relative;
+      padding: 60px 48px 40px;
+      max-width: 1100px;
       margin: 0 auto;
+      overflow: visible;
+    }
+
+    .hero-deco {
+      position: absolute;
+      font-family: "Poppins", sans-serif;
+      font-weight: 900;
+      font-size: clamp(120px, 20vw, 260px);
+      line-height: 1;
+      color: #fff;
+      opacity: 0.04;
+      top: -10px; left: -10px;
+      user-select: none;
+      pointer-events: none;
+      letter-spacing: -6px;
+    }
+
+    .hero-inner {
+      display: flex;
+      align-items: center;
+      gap: 64px;
+    }
+
+    .hero-copy {
+      flex: 1;
+      min-width: 0;
+      perspective: 1200px;
+      position: relative;
+    }
+
+    .hero-card {
+      width: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(0.4, 0.2, 0.2, 1);
+      position: relative;
+    }
+
+    .hero-card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .hero-card-front,
+    .hero-card-back {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      background: rgba(232,213,188,0.88);
+      backdrop-filter: blur(16px);
+      border-radius: 16px;
+      padding: 32px 52px 32px 36px;
+      box-shadow: 0 4px 32px rgba(26,42,74,0.1);
+    }
+
+    .hero-card-back {
+      position: absolute;
+      inset: 0;
+      transform: rotateY(180deg);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .flip-btn {
+      position: absolute;
+      top: 50%;
+      right: -18px;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #2a6aad;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 12px rgba(42,106,173,0.4);
+      transition: background 0.2s, transform 0.2s;
+      z-index: 10;
+    }
+
+    .flip-btn:hover {
+      background: #1a3a6b;
+      transform: translateY(-50%) scale(1.1);
     }
 
     .hero-label {
       display: inline-block;
-      font-size: 11px;
+      font-size: 10px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: rgba(0,0,0,0.4);
-      border: 1px solid rgba(180,120,0,0.25);
-      border-radius: 20px;
-      padding: 5px 16px;
-      margin-bottom: 28px;
-      background: rgba(245,158,11,0.07);
+      color: rgba(26,42,74,0.55);
+      border: 1px solid rgba(42,106,173,0.3);
+      border-radius: 4px;
+      padding: 5px 12px;
+      margin-bottom: 24px;
+      background: rgba(42,106,173,0.07);
+      transform: rotate(-1deg);
+      display: inline-block;
     }
 
     .hero h1 {
       font-family: "Poppins", sans-serif;
-      font-weight: 800;
-      font-size: clamp(42px, 7vw, 72px);
-      line-height: 1.1;
+      font-weight: 900;
+      font-size: clamp(32px, 4vw, 52px);
+      line-height: 1.15;
       letter-spacing: -1px;
-      margin-bottom: 22px;
+      margin-bottom: 24px;
     }
 
     .hero h1 span {
-      background: linear-gradient(90deg, #ea580c, #f59e0b);
+      background: linear-gradient(90deg, #1a9a8a, #2a6aad);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .hero p {
-      font-size: 18px;
-      color: rgba(0,0,0,0.5);
+      font-size: 16px;
+      color: rgba(26,42,74,0.6);
       line-height: 1.7;
-      margin-bottom: 44px;
-      max-width: 520px;
-      margin-left: auto;
-      margin-right: auto;
+      margin-bottom: 36px;
+      max-width: 420px;
     }
 
     .cta-group {
       display: flex;
-      gap: 16px;
-      justify-content: center;
+      gap: 12px;
+      justify-content: flex-start;
       flex-wrap: wrap;
+    }
+
+    .hero-pad {
+      flex-shrink: 0;
+      position: relative;
+      transform: rotate(-5deg);
+    }
+
+    .float-tag {
+      position: absolute;
+      background: rgba(232,213,188,0.85);
+      border: 1px solid rgba(42,106,173,0.25);
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #2a6aad;
+      padding: 6px 12px;
+      white-space: nowrap;
+      backdrop-filter: blur(4px);
+    }
+
+    .float-tag-1 { top: -18px; right: -14px; transform: rotate(7deg); }
+    .float-tag-2 { bottom: -14px; left: -18px; transform: rotate(-6deg); }
+
+    @media (max-width: 720px) {
+      .hero { padding: 48px 24px 32px; }
+      .hero-inner { flex-direction: column; gap: 40px; }
+      .hero h1 { font-size: clamp(42px, 11vw, 64px); }
+      .hero p { max-width: 100%; }
+      .cta-group { justify-content: center; }
+      .hero-pad { transform: rotate(-2deg); }
+      .hero-label { transform: none; }
     }
 
     .btn-primary {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: #f59e0b;
-      color: #1a0800;
+      background: #2a6aad;
+      color: #fff;
       font-weight: 700;
       font-size: 15px;
       letter-spacing: 0.5px;
@@ -178,21 +299,21 @@
       border-radius: 14px;
       text-decoration: none;
       transition: transform 0.15s, box-shadow 0.2s;
-      box-shadow: 0 4px 24px rgba(245,158,11,0.35);
+      box-shadow: 0 4px 24px rgba(42,106,173,0.4);
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(245,158,11,0.5);
+      box-shadow: 0 8px 32px rgba(42,106,173,0.55);
     }
 
     .btn-secondary {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(0,0,0,0.04);
-      border: 1px solid rgba(0,0,0,0.14);
-      color: rgba(0,0,0,0.7);
+      background: rgba(26,42,74,0.06);
+      border: 1px solid rgba(26,42,74,0.2);
+      color: rgba(26,42,74,0.75);
       font-weight: 600;
       font-size: 15px;
       letter-spacing: 0.5px;
@@ -203,9 +324,9 @@
     }
 
     .btn-secondary:hover {
-      background: rgba(0,0,0,0.08);
+      background: rgba(26,42,74,0.12);
       transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 20px rgba(26,42,74,0.1);
     }
 
     /* Pad preview */
@@ -221,10 +342,10 @@
       grid-template-rows: repeat(5, 64px);
       gap: 10px;
       padding: 20px;
-      background: url('assets/landing-page.png') center/cover no-repeat;
-      border: 1px solid rgba(0,0,0,0.07);
+      background: rgba(42,90,160,0.45);
+      border: 1px solid rgba(58,184,208,0.35);
       border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(180,120,0,0.12);
+      box-shadow: 0 20px 60px rgba(26,58,120,0.3);
     }
 
     .pad-cell {
@@ -238,10 +359,10 @@
       inset: 0;
       display: block;
       border-radius: 13px;
-      background: rgba(0,0,0,0.45);
-      border-top: 1px solid rgba(255,255,255,0.12);
-      border-bottom: 1px solid rgba(0,0,0,0.4);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+      background: rgba(58,110,190,0.35);
+      border-top: 1px solid rgba(100,200,230,0.28);
+      border-bottom: 1px solid rgba(26,58,120,0.3);
+      box-shadow: 0 4px 10px rgba(26,58,120,0.2);
       overflow: hidden;
       transition: box-shadow 0.3s ease;
     }
@@ -272,11 +393,11 @@
     .pad-cell::before { bottom: -3px; }
     .pad-cell::after  { top: -3px; }
 
-    .pad-cell.r1::before, .pad-cell.r1::after { background: #ff1f71; box-shadow: 0 0 5px #ff1f71, 0 0 15px #ff1f71, 0 0 30px #ff1f71; }
-    .pad-cell.r2::before, .pad-cell.r2::after { background: #ff8c1a; box-shadow: 0 0 5px #ff8c1a, 0 0 15px #ff8c1a, 0 0 30px #ff8c1a; }
-    .pad-cell.r3::before, .pad-cell.r3::after { background: #ffd500; box-shadow: 0 0 5px #ffd500, 0 0 15px #ffd500, 0 0 30px #ffd500; }
-    .pad-cell.r4::before, .pad-cell.r4::after { background: #f59e0b; box-shadow: 0 0 5px #f59e0b, 0 0 15px #f59e0b, 0 0 30px #f59e0b; }
-    .pad-cell.r5::before, .pad-cell.r5::after { background: #ff6a00; box-shadow: 0 0 5px #ff6a00, 0 0 15px #ff6a00, 0 0 30px #ff6a00; }
+    .pad-cell.r1::before, .pad-cell.r1::after { background: #1a9a8a; box-shadow: 0 0 5px #1a9a8a, 0 0 15px #1a9a8a, 0 0 30px #1a9a8a; }
+    .pad-cell.r2::before, .pad-cell.r2::after { background: #2a6aad; box-shadow: 0 0 5px #2a6aad, 0 0 15px #2a6aad, 0 0 30px #2a6aad; }
+    .pad-cell.r3::before, .pad-cell.r3::after { background: #3ab8d0; box-shadow: 0 0 5px #3ab8d0, 0 0 15px #3ab8d0, 0 0 30px #3ab8d0; }
+    .pad-cell.r4::before, .pad-cell.r4::after { background: #f5c432; box-shadow: 0 0 5px #f5c432, 0 0 15px #f5c432, 0 0 30px #f5c432; }
+    .pad-cell.r5::before, .pad-cell.r5::after { background: #1a3a6b; box-shadow: 0 0 5px #1a3a6b, 0 0 15px #1a3a6b, 0 0 30px #1a3a6b; }
 
     /* Lit / active state */
     .pad-cell.lit::before,
@@ -287,7 +408,7 @@
     }
 
     .pad-cell.lit a {
-      box-shadow: 0 0 16px rgba(245,158,11,0.5), 0 0 32px rgba(245,158,11,0.25);
+      box-shadow: 0 0 16px rgba(58,184,208,0.5), 0 0 32px rgba(58,184,208,0.25);
     }
 
     /* Packs section */
@@ -298,20 +419,57 @@
     }
 
     .section-header {
-      text-align: center;
-      margin-bottom: 52px;
+      margin-bottom: 48px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .subsection-title {
+      font-family: "Poppins", sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: #1a3a6b;
+      letter-spacing: 0.3px;
+      margin-bottom: 16px;
+      opacity: 0.7;
+    }
+
+    .section-num {
+      font-family: "Poppins", sans-serif;
+      font-weight: 900;
+      font-size: clamp(72px, 10vw, 120px);
+      line-height: 1;
+      color: #fff;
+      opacity: 0.06;
+      letter-spacing: -4px;
+      flex-shrink: 0;
+    }
+
+    .section-header-text {
+      flex: 1;
+      min-width: 200px;
+      background: rgba(232,213,188,0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(42,106,173,0.15);
+      border-radius: 16px;
+      padding: 24px 28px;
     }
 
     .section-header h2 {
       font-family: "Poppins", sans-serif;
-      font-weight: 700;
-      font-size: clamp(28px, 4vw, 40px);
-      margin-bottom: 12px;
+      font-weight: 800;
+      font-size: clamp(26px, 4vw, 38px);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
     }
 
     .section-header p {
-      color: rgba(0,0,0,0.45);
-      font-size: 16px;
+      color: rgba(26,42,74,0.6);
+      font-size: 15px;
     }
 
     .packs-grid {
@@ -321,18 +479,23 @@
     }
 
     .pack-card {
-      background: #fff;
-      border: 1px solid rgba(0,0,0,0.07);
+      background: rgba(232,213,188,0.88);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(42,106,173,0.15);
       border-radius: 18px;
       padding: 28px 24px;
       transition: transform 0.2s, box-shadow 0.2s;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 4px 32px rgba(26,42,74,0.1);
     }
 
+    .pack-card:nth-child(odd)  { transform: rotate(-1deg); }
+    .pack-card:nth-child(even) { transform: rotate(1deg); }
+
     .pack-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+      transform: rotate(0deg) translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
     }
 
     .pack-card::before {
@@ -353,7 +516,7 @@
       font-size: 10px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: rgba(0,0,0,0.35);
+      color: rgba(26,42,74,0.5);
       margin-bottom: 10px;
     }
 
@@ -366,7 +529,7 @@
 
     .pack-card p {
       font-size: 13px;
-      color: rgba(0,0,0,0.45);
+      color: rgba(26,42,74,0.5);
       line-height: 1.6;
       margin-bottom: 20px;
     }
@@ -390,9 +553,9 @@
       font-size: 10px;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      color: #b45309;
-      background: rgba(245,158,11,0.12);
-      border: 1px solid rgba(245,158,11,0.3);
+      color: #1a9a8a;
+      background: rgba(26,154,138,0.1);
+      border: 1px solid rgba(26,154,138,0.3);
       border-radius: 20px;
       padding: 3px 10px;
     }
@@ -406,11 +569,12 @@
     }
 
     .pricing-card {
-      background: #fff;
-      border: 1px solid rgba(0,0,0,0.08);
+      background: rgba(232,213,188,0.88);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(42,106,173,0.15);
       border-radius: 22px;
       padding: 44px 40px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+      box-shadow: 0 4px 32px rgba(26,42,74,0.1);
     }
 
     .pricing-card h2 {
@@ -436,7 +600,7 @@
 
     .price-period {
       font-size: 13px;
-      color: rgba(0,0,0,0.4);
+      color: rgba(26,42,74,0.5);
       margin-bottom: 28px;
     }
 
@@ -448,9 +612,9 @@
 
     .pricing-features li {
       font-size: 14px;
-      color: rgba(0,0,0,0.6);
+      color: rgba(26,42,74,0.7);
       padding: 8px 0;
-      border-bottom: 1px solid rgba(0,0,0,0.06);
+      border-bottom: 1px solid rgba(26,42,74,0.08);
       display: flex;
       align-items: center;
       gap: 10px;
@@ -634,10 +798,10 @@
 
     /* Footer */
     footer {
-      border-top: 1px solid rgba(0,0,0,0.07);
+      border-top: 1px solid rgba(26,42,74,0.1);
       padding: 32px 48px;
       text-align: center;
-      color: rgba(0,0,0,0.3);
+      color: rgba(26,42,74,0.35);
       font-size: 13px;
     }
   </style>
@@ -664,24 +828,55 @@
     </nav>
 
     <section class="hero">
-      <span class="hero-label" id="hero-label">Browser-based beat maker</span>
-      <h1>Play themed<br><span>audio sets.</span></h1>
-      <p>Layer loops from curated sound packs and have fun — entirely in your browser. No downloads, no setup.</p>
-      <div class="cta-group">
-        <a href="app.html" class="btn-primary" id="hero-play-btn">▶ Play Free</a>
-        <a href="#packs" class="btn-secondary" id="hero-browse-btn">Explore Sound Packs →</a>
+      <div class="hero-deco">BEAT</div>
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <div class="hero-card" id="hero-card">
+
+            <div class="hero-card-front">
+              <h1>Play themed <span>audio sets.</span></h1>
+              <p>Layer loops from curated sound packs and have fun — entirely in your browser. No downloads, no setup.</p>
+              <div class="cta-group">
+                <a href="app.html" class="btn-primary" id="hero-play-btn">▶ Play Free</a>
+                <a href="#packs" class="btn-secondary" id="hero-browse-btn">Explore Packs →</a>
+              </div>
+            </div>
+
+            <div class="hero-card-back">
+              <h1>Your music. <span>Interactive.</span></h1>
+              <p>Turn your single or album into a playable launchpad — let fans explore your sounds in a whole new way.</p>
+              <div class="cta-group">
+                <a href="mailto:mikesuokas@gmail.com" class="btn-primary">Get in touch →</a>
+              </div>
+            </div>
+
+          </div>
+          <button class="flip-btn" id="flip-btn" title="For Artists">→</button>
+        </div>
+        <div class="hero-pad">
+          <div class="pad-mock" id="pad-mock"></div>
+          <span class="float-tag float-tag-1">25 sounds</span>
+        </div>
       </div>
     </section>
 
-    <div class="pad-preview">
-      <div class="pad-mock" id="pad-mock"></div>
-    </div>
-
     <section class="section" id="packs">
-      <div class="section-header">
-        <h2>Expand your sound library</h2>
-        <p>Each pack adds 25 new loops to the pad — crafted for a specific sound and mood.</p>
+      <div class="section-header" id="packs-section-header">
+        <span class="section-num">01</span>
+        <div class="section-header-text">
+          <h2>Unlock the full experience</h2>
+          <p>Subscribe for instant access to our ever-growing launchpad collection — plus your own personal studio to build custom launchpads from our curated sound library. Your sounds, your vibe, your way.</p>
+          <div style="display:flex; align-items:center; gap:16px; margin-top:20px; flex-wrap:wrap;">
+            <div>
+              <span style="font-size:28px; font-weight:800; color:#2a6aad; font-family:'Poppins',sans-serif;">$34.99</span>
+              <span style="font-size:13px; color:rgba(26,42,74,0.5); margin-left:4px;">/ year</span>
+            </div>
+            <button id="cta-subscribe-top" class="btn-primary" style="cursor:pointer; border:none; padding:12px 28px; font-size:15px;">Get All Sound Packs</button>
+          </div>
+        </div>
       </div>
+
+      <h3 class="subsection-title">Latest launchpads</h3>
       <div class="packs-grid">
         <div class="pack-card c1">
           <span class="pack-badge">FREE</span>
@@ -721,23 +916,47 @@
           </div>
         </div>
       </div>
+
+      <h3 class="subsection-title" style="margin-top:48px;">Latest soundpacks</h3>
+      <div class="packs-grid">
+        <div class="pack-card c2">
+          <span class="pack-tag">Electronic</span>
+          <h3>Deep House</h3>
+          <p>Four-on-the-floor kicks, warm chords, and rolling basslines at 124 BPM.</p>
+          <div class="pack-dots">
+            <div class="pack-dot" style="background:var(--c2)"></div>
+            <div class="pack-dot" style="background:var(--c3)"></div>
+          </div>
+        </div>
+        <div class="pack-card c3">
+          <span class="pack-tag">Hip-Hop</span>
+          <h3>Boom Bap</h3>
+          <p>Classic breaks, dusty samples, and punchy snares. Lo-fi feel, high-fi execution.</p>
+          <div class="pack-dots">
+            <div class="pack-dot" style="background:var(--c4)"></div>
+            <div class="pack-dot" style="background:var(--c1)"></div>
+          </div>
+        </div>
+        <div class="pack-card c4">
+          <span class="pack-tag">Kids &amp; Family</span>
+          <h3>Animal Beats 🐘</h3>
+          <p>Fun animal sounds and playful loops — made for little ones to explore rhythm and music.</p>
+          <div class="pack-dots" style="font-size:18px; gap:8px; display:flex">
+            🦁 🐸 🐼 🦋
+          </div>
+        </div>
+        <div class="pack-card c1">
+          <span class="pack-tag">Ambient</span>
+          <h3>Atmospheres</h3>
+          <p>Drifting pads, textured drones, and slow evolving layers for focus and flow.</p>
+          <div class="pack-dots">
+            <div class="pack-dot" style="background:var(--c3)"></div>
+            <div class="pack-dot" style="background:var(--c5)"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <div class="pricing-strip" id="pricing-strip">
-      <div class="pricing-card">
-        <h2>All Sound Packs</h2>
-        <p style="color:rgba(255,255,255,0.45); font-size:14px; margin-top:8px">One subscription, every pack — including future releases.</p>
-        <div class="price"><sup>€</sup>4<sup style="font-size:18px; vertical-align:super">.99</sup></div>
-        <div class="price-period">per month</div>
-        <ul class="pricing-features">
-          <li>Access to all current sound packs</li>
-          <li>New packs added regularly</li>
-          <li>Save and load your sets</li>
-          <li>Cancel any time</li>
-        </ul>
-        <button id="cta-subscribe" class="btn-primary" style="width:100%; justify-content:center; font-size:16px; padding:16px; cursor:pointer; border:none;">Get All Sound Packs</button>
-      </div>
-    </div>
 
     <footer>
       © 2025 Launchpad — Make beats in your browser
@@ -795,7 +1014,7 @@
       el.textContent = msg;
     }
 
-    const ctaBtn = document.getElementById('cta-subscribe');
+    const ctaBtnTop = document.getElementById('cta-subscribe-top');
 
     async function updateUI(session) {
       const logoutBtn = document.getElementById('nav-logout-btn');
@@ -807,7 +1026,7 @@
         loginBtn.textContent = 'Log in';
         loginBtn.style.pointerEvents = '';
         logoutBtn.style.display = 'none';
-        ctaBtn.textContent = 'Get All Sound Packs';
+        ctaBtnTop.textContent = 'Get All Sound Packs';
         return;
       }
 
@@ -820,32 +1039,47 @@
         // Nav badge
         loginBtn.innerHTML = session.user.email.split('@')[0] + '<span class="nav-badge">⭐</span>';
 
-        // Hero
-        document.getElementById('hero-label').textContent = 'All packs unlocked';
-        document.getElementById('hero-play-btn').textContent = '▶ Play';
-        document.getElementById('hero-browse-btn').textContent = 'Browse Packs →';
-
-        // Replace pricing strip with "you're set" card
-        document.getElementById('pricing-strip').innerHTML = `
-          <div class="subscribed-card">
-            <div class="check">⭐</div>
-            <h2>You're all set</h2>
-            <p>All sound packs are unlocked. Jump in and play.</p>
-            <a href="app.html" class="btn-primary" style="display:inline-flex; padding:14px 40px; font-size:15px;">▶ Open App</a>
+        // Hero — full replacement for subscribers
+        document.querySelector('.hero-inner').innerHTML = `
+          <div class="hero-copy" style="perspective:none;">
+            <div style="background:rgba(232,213,188,0.88); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(42,106,173,0.15); border-radius:16px; padding:36px 40px; max-width:500px;">
+              <h1 style="font-family:'Poppins',sans-serif; font-weight:800; font-size:clamp(28px,4vw,42px); color:#1a3a6b; margin-bottom:32px; letter-spacing:-0.5px;">What would you like to do?</h1>
+              <div style="display:flex; flex-direction:column; gap:16px;">
+                <a href="app.html" style="display:flex; align-items:center; gap:20px; background:#2a6aad; color:#fff; border-radius:14px; padding:20px 24px; text-decoration:none; transition:transform 0.15s, box-shadow 0.2s; box-shadow:0 4px 24px rgba(42,106,173,0.35);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(42,106,173,0.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 24px rgba(42,106,173,0.35)'">
+                  <span style="font-size:32px; line-height:1;">▶</span>
+                  <div>
+                    <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:18px; margin-bottom:3px;">Play</div>
+                    <div style="font-size:13px; opacity:0.8;">Play themed launchpads</div>
+                  </div>
+                </a>
+                <a href="app.html" style="display:flex; align-items:center; gap:20px; background:rgba(26,42,74,0.07); color:#1a3a6b; border:1px solid rgba(42,106,173,0.2); border-radius:14px; padding:20px 24px; text-decoration:none; transition:transform 0.15s, background 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.background='rgba(26,42,74,0.12)'" onmouseout="this.style.transform='';this.style.background='rgba(26,42,74,0.07)'">
+                  <span style="font-size:32px; line-height:1;">🎛️</span>
+                  <div>
+                    <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:18px; margin-bottom:3px;">Launchpad Studio</div>
+                    <div style="font-size:13px; opacity:0.6;">Create and manage your custom launchpads with 1000s of precurated sounds</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="hero-pad">
+            <div class="pad-mock" id="pad-mock"></div>
+            <span class="float-tag float-tag-1">25 sounds</span>
           </div>`;
+        buildPadMock();
 
-        // CTA button (in pack section)
-        ctaBtn.textContent = '✓ Subscribed — Open App';
-        ctaBtn.onclick = () => window.location.href = 'app.html';
+        // Hide subscribe pitch for subscribers
+        document.getElementById('packs-section-header').style.display = 'none';
+
       } else {
-        ctaBtn.textContent = 'Subscribe — €4.99 / mo';
-        ctaBtn.onclick = () => startCheckout(session);
+        ctaBtnTop.textContent = 'Get All Sound Packs';
+        ctaBtnTop.onclick = () => startCheckout(session);
       }
     }
 
     async function startCheckout(session) {
-      ctaBtn.textContent = 'Loading…';
-      ctaBtn.disabled = true;
+      ctaBtnTop.textContent = 'Loading…';
+      ctaBtnTop.disabled = true;
       const res = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}` }
@@ -854,17 +1088,19 @@
       if (url) {
         window.location.href = url;
       } else {
-        ctaBtn.textContent = 'Subscribe — €4.99 / mo';
-        ctaBtn.disabled = false;
+        ctaBtnTop.textContent = 'Get All Sound Packs';
+        ctaBtnTop.disabled = false;
         showStatus('error', error || 'Something went wrong');
       }
     }
 
     // CTA button: open login if not logged in
-    ctaBtn.addEventListener('click', async () => {
+    async function handleCtaClick() {
       const { data: { session } } = await db.auth.getSession();
       if (!session) overlay.classList.remove('hidden');
-    });
+    }
+
+    ctaBtnTop.addEventListener('click', handleCtaClick);
 
     loginBtn.addEventListener('click', e => {
       e.preventDefault();
@@ -874,8 +1110,7 @@
     document.getElementById('nav-logout-btn').addEventListener('click', async e => {
       e.preventDefault();
       await db.auth.signOut();
-      document.getElementById('nav-logout-btn').style.display = 'none';
-      updateUI(null);
+      window.location.reload();
     });
 
     document.getElementById('auth-close').onclick = () => overlay.classList.add('hidden');
@@ -960,25 +1195,40 @@
 
   <script>
     // Build pad mock with animated lit cells
-    const mock = document.getElementById('pad-mock');
-    const rows = ['r1','r2','r3','r4','r5'];
-    const litCells = new Set([1, 7, 13, 19, 23]);
-    for (let i = 0; i < 25; i++) {
-      const row = rows[Math.floor(i / 5)];
-      const cell = document.createElement('div');
-      cell.className = `pad-cell ${row}${litCells.has(i) ? ' lit' : ''}`;
-      cell.appendChild(document.createElement('a'));
-      mock.appendChild(cell);
+    function buildPadMock() {
+      const mock = document.getElementById('pad-mock');
+      if (!mock) return;
+      mock.innerHTML = '';
+      const rows = ['r1','r2','r3','r4','r5'];
+      const litCells = new Set([1, 7, 13, 19, 23]);
+      for (let i = 0; i < 25; i++) {
+        const row = rows[Math.floor(i / 5)];
+        const cell = document.createElement('div');
+        cell.className = `pad-cell ${row}${litCells.has(i) ? ' lit' : ''}`;
+        cell.appendChild(document.createElement('a'));
+        mock.appendChild(cell);
+      }
     }
+    buildPadMock();
 
     // Randomly pulse cells
     setInterval(() => {
+      const mock = document.getElementById('pad-mock');
+      if (!mock) return;
       const cells = mock.querySelectorAll('.pad-cell');
       const idx = Math.floor(Math.random() * 25);
       const cell = cells[idx];
       cell.classList.add('lit');
       setTimeout(() => cell.classList.remove('lit'), 600);
     }, 900);
+
+    const flipBtn = document.getElementById('flip-btn');
+    if (flipBtn) flipBtn.onclick = () => {
+      const card = document.getElementById('hero-card');
+      const btn = document.getElementById('flip-btn');
+      const flipped = card.classList.toggle('flipped');
+      btn.textContent = flipped ? '←' : '→';
+    };
   </script>
 
 </body>
