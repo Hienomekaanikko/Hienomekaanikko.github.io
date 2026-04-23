@@ -720,6 +720,10 @@ window.addEventListener("load", async () => {
 	document.getElementById('auth-close').onclick = () => authOverlay.classList.add('hidden');
 	authOverlay.addEventListener('click', e => { if (e.target === authOverlay) authOverlay.classList.add('hidden'); });
 
+	document.getElementById('google-signin').onclick = () => {
+		db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+	};
+
 	// Tabs
 	document.querySelectorAll('.auth-tab').forEach(tab => {
 		tab.onclick = () => {
