@@ -836,6 +836,13 @@ window.addEventListener("load", async () => {
 		const folderName = theme.name.toLowerCase().replace(/\s+/g, '-');
 		const bgPath = `${folderName}/bg.${ext}`;
 
+		// Remove any existing bg files (different extensions leave stale files)
+		const { data: existing } = await db.storage.from('soundpacks').list(folderName);
+		if (existing) {
+			const oldBgs = existing.filter(f => f.name.startsWith('bg.')).map(f => `${folderName}/${f.name}`);
+			if (oldBgs.length) await db.storage.from('soundpacks').remove(oldBgs);
+		}
+
 		const { error: storageErr } = await db.storage.from('soundpacks').upload(bgPath, file, { upsert: true });
 		if (storageErr) {
 			console.error('Storage upload failed:', storageErr);
@@ -844,7 +851,8 @@ window.addEventListener("load", async () => {
 			return;
 		}
 
-		const bgUrl = `${SUPABASE_URL}/storage/v1/object/public/soundpacks/${bgPath}`;
+		// Cache-bust so CDN doesn't serve the old image
+		const bgUrl = `${SUPABASE_URL}/storage/v1/object/public/soundpacks/${bgPath}?v=${Date.now()}`;
 		const { error: dbErr } = await db.from('packs').update({ bg_image: bgUrl }).eq('id', theme.id);
 		if (dbErr) {
 			console.error('DB update failed:', dbErr);

@@ -538,9 +538,17 @@
     if (bgFile) {
       const ext = bgFile.name.split('.').pop();
       const bgPath = `${pack.id}/bg.${ext}`;
+
+      // Remove any stale bg files before uploading
+      const { data: existing } = await db.storage.from('soundpacks').list(pack.id.toString());
+      if (existing) {
+        const oldBgs = existing.filter(f => f.name.startsWith('bg.')).map(f => `${pack.id}/${f.name}`);
+        if (oldBgs.length) await db.storage.from('soundpacks').remove(oldBgs);
+      }
+
       const { error: bgErr } = await db.storage.from('soundpacks').upload(bgPath, bgFile);
       if (!bgErr) {
-        const bgUrl = `${SUPABASE_URL}/storage/v1/object/public/soundpacks/${bgPath}`;
+        const bgUrl = `${SUPABASE_URL}/storage/v1/object/public/soundpacks/${bgPath}?v=${Date.now()}`;
         await db.from('packs').update({ bg_image: bgUrl }).eq('id', pack.id);
       }
     }
