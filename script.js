@@ -13,10 +13,11 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let themes = [];
 const bufferCache = new Map();
 
+// Fetch only pack metadata upfront — sounds loaded lazily per theme
 async function fetchThemes() {
 	const { data: packs, error } = await db
 		.from('packs')
-		.select('*, pack_sounds(*)')
+		.select('id, name, colors, bg, bg_image, body_class, sort_order')
 		.order('sort_order');
 
 	if (error) { console.error('Failed to fetch packs', error); return; }
@@ -28,10 +29,36 @@ async function fetchThemes() {
 		bg: pack.bg,
 		bgImage: pack.bg_image || null,
 		bodyClass: pack.body_class || null,
-		sounds: Object.fromEntries(
-			pack.pack_sounds.map(s => [s.slot, STORAGE_BASE + s.file_path])
-		)
+		sounds: null  // loaded on demand
 	}));
+}
+
+// Fetch sound URLs for a theme if not already loaded
+async function ensureThemeSounds(theme) {
+	if (theme.sounds !== null) return;
+	const { data, error } = await db
+		.from('pack_sounds')
+		.select('slot, file_path')
+		.eq('pack_id', theme.id);
+	if (error) { console.error('Failed to fetch sounds for', theme.name, error); theme.sounds = {}; return; }
+	theme.sounds = Object.fromEntries(data.map(s => [s.slot, STORAGE_BASE + s.file_path]));
+}
+
+// Evict decoded buffers for themes outside current ± 1 range to keep memory bounded
+function evictDistantBuffers(currentIndex) {
+	const keep = new Set([
+		(currentIndex - 1 + themes.length) % themes.length,
+		currentIndex,
+		(currentIndex + 1) % themes.length
+	]);
+	const keepUrls = new Set();
+	for (const idx of keep) {
+		const t = themes[idx];
+		if (t?.sounds) Object.values(t.sounds).forEach(url => keepUrls.add(url));
+	}
+	for (const url of bufferCache.keys()) {
+		if (!keepUrls.has(url)) bufferCache.delete(url);
+	}
 }
 
 let currentThemeIndex = 0;
@@ -272,13 +299,15 @@ function applyThemeColors(theme) {
 }
 
 function updateThemeLabels() {
+	if (themes.length === 0) return;
 	const prev = themes[(currentThemeIndex - 1 + themes.length) % themes.length];
 	const next = themes[(currentThemeIndex + 1) % themes.length];
-	document.getElementById('theme-label-left').textContent = prev.name;
-	document.getElementById('theme-label-right').textContent = next.name;
+	document.getElementById('theme-label-left').textContent = themes.length > 1 ? prev.name : '';
+	document.getElementById('theme-label-right').textContent = themes.length > 1 ? next.name : '';
 }
 
-function prefetchAdjacentThemes(currentIndex) {
+async function prefetchAdjacentThemes(currentIndex) {
+	if (themes.length <= 1) return;
 	const indices = [
 		(currentIndex - 1 + themes.length) % themes.length,
 		(currentIndex + 1) % themes.length
@@ -286,14 +315,22 @@ function prefetchAdjacentThemes(currentIndex) {
 	for (const idx of indices) {
 		const t = themes[idx];
 		if (!t) continue;
-		Object.values(t.sounds).forEach(url => {
-			if (!bufferCache.has(url)) fetch(url).catch(() => {});
-		});
+		// Fetch sound metadata if not loaded yet
+		await ensureThemeSounds(t);
+		if (!t.sounds) continue;
+		// Warm HTTP cache — max 4 concurrent fetches per neighbour to avoid flooding
+		const urls = Object.values(t.sounds).filter(url => !bufferCache.has(url));
+		for (let i = 0; i < urls.length; i += 4) {
+			await Promise.all(urls.slice(i, i + 4).map(url => fetch(url).catch(() => {})));
+		}
 		if (t.bgImage) fetch(t.bgImage).catch(() => {});
 	}
 }
 
 async function loadThemeSounds(theme) {
+	// Ensure sound URLs are fetched for this theme
+	await ensureThemeSounds(theme);
+
 	// Clear all stutter sources
 	for (let r = 1; r <= 5; r++) {
 		const st = rowStutter[r];
@@ -339,6 +376,9 @@ async function loadThemeSounds(theme) {
 				});
 		})
 	);
+
+	// Evict decoded audio buffers for themes far from current to keep memory bounded
+	evictDistantBuffers(currentThemeIndex);
 }
 
 function startStutter(row, divisor) {
@@ -431,6 +471,7 @@ function getThemeOverlay() {
 }
 
 async function switchTheme(direction) {
+	if (themes.length === 0) return;
 	const container = document.querySelector('.container');
 	container.classList.add('switching');
 
