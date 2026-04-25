@@ -883,6 +883,7 @@ window.addEventListener("load", async () => {
 
 	const changeBgBtn = document.getElementById('change-bg-btn');
 	const bgFileInput = document.getElementById('bg-file-input');
+	const removePackBtn = document.getElementById('remove-pack-btn');
 
 	function toggleEditMode() {
 		editMode = !editMode;
@@ -890,7 +891,62 @@ window.addEventListener("load", async () => {
 		editBtn.textContent = editMode ? 'Exit Edit' : 'Edit Pack';
 		editBtn.classList.toggle('edit-btn-active', editMode);
 		changeBgBtn.classList.toggle('hidden', !editMode);
+		removePackBtn.classList.toggle('hidden', !editMode);
 	}
+
+	removePackBtn.onclick = async () => {
+		const theme = themes[currentThemeIndex];
+		if (!confirm(`Remove "${theme.name}"? This cannot be undone.`)) return;
+
+		removePackBtn.textContent = 'Removing…';
+		removePackBtn.disabled = true;
+
+		// Delete storage files for this pack
+		const { data: files } = await db.storage.from('soundpacks').list(theme.id.toString());
+		if (files?.length) {
+			await db.storage.from('soundpacks').remove(files.map(f => `${theme.id}/${f.name}`));
+		}
+
+		// Delete pack_sounds and pack rows
+		await db.from('pack_sounds').delete().eq('pack_id', theme.id);
+		const { error } = await db.from('packs').delete().eq('id', theme.id);
+
+		if (error) {
+			removePackBtn.textContent = 'Remove Pack';
+			removePackBtn.disabled = false;
+			alert('Failed to delete pack: ' + error.message);
+			return;
+		}
+
+		// Remove from local themes array and switch to nearest remaining theme
+		themes.splice(currentThemeIndex, 1);
+		if (themes.length === 0) {
+			toggleEditMode();
+			removePackBtn.classList.add('hidden');
+			editBtn.classList.add('hidden');
+			alert('Pack deleted. No packs remaining.');
+			return;
+		}
+		currentThemeIndex = Math.min(currentThemeIndex, themes.length - 1);
+
+		// Show deleted message briefly then load next theme
+		removePackBtn.textContent = 'Pack deleted';
+		setTimeout(async () => {
+			removePackBtn.textContent = 'Remove Pack';
+			removePackBtn.disabled = false;
+			toggleEditMode();
+			const theme = themes[currentThemeIndex];
+			await new Promise(resolve => {
+				if (!theme.bgImage) { applyThemeColors(theme); resolve(); return; }
+				const img = new Image();
+				img.onload = () => { applyThemeColors(theme); resolve(); };
+				img.onerror = () => { applyThemeColors(theme); resolve(); };
+				img.src = theme.bgImage;
+			});
+			updateThemeLabels();
+			loadThemeSounds(theme);
+		}, 1500);
+	};
 
 	changeBgBtn.onclick = () => { bgFileInput.value = ''; bgFileInput.click(); };
 
