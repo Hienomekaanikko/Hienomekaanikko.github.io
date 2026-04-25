@@ -907,13 +907,12 @@ window.addEventListener("load", async () => {
 		if (!session) { changeBgBtn.textContent = 'Not logged in'; changeBgBtn.disabled = false; return; }
 
 		const ext = file.name.split('.').pop();
-		const folderName = theme.name.toLowerCase().replace(/\s+/g, '-');
-		const bgPath = `${folderName}/bg.${ext}`;
+		const bgPath = `${theme.id}/bg.${ext}`;
 
 		// Remove any existing bg files (different extensions leave stale files)
-		const { data: existing } = await db.storage.from('soundpacks').list(folderName);
+		const { data: existing } = await db.storage.from('soundpacks').list(theme.id.toString());
 		if (existing) {
-			const oldBgs = existing.filter(f => f.name.startsWith('bg.')).map(f => `${folderName}/${f.name}`);
+			const oldBgs = existing.filter(f => f.name.startsWith('bg.')).map(f => `${theme.id}/${f.name}`);
 			if (oldBgs.length) await db.storage.from('soundpacks').remove(oldBgs);
 		}
 
