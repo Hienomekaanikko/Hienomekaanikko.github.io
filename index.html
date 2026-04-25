@@ -1164,6 +1164,16 @@
 
     db.auth.getSession().then(({ data: { session } }) => updateUI(session));
 
+    // Silently preload first theme's sounds into browser cache so app.html opens faster
+    (async () => {
+      const STORAGE_BASE = `${SUPABASE_URL}/storage/v1/object/public/soundpacks/`;
+      const { data: packs } = await db.from('packs').select('*, pack_sounds(*)').order('sort_order').limit(1);
+      if (!packs?.length) return;
+      packs[0].pack_sounds.forEach(s => {
+        fetch(STORAGE_BASE + s.file_path).catch(() => {});
+      });
+    })();
+
     // Packs modal
     const packsOverlay = document.getElementById('packs-overlay');
     document.getElementById('packs-close').onclick = () => packsOverlay.classList.add('hidden');

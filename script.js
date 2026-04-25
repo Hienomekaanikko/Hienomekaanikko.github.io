@@ -300,18 +300,30 @@ async function loadThemeSounds(theme) {
 	masterStartTime = null;
 	masterLoopDuration = null;
 
+	// Mark all buttons as loading
 	for (let i = 1; i <= 25; i++) {
-		const name = `sound${i}`;
-		const id = `btn${i}`;
-		const url = theme.sounds[i];
-		if (!url) continue;
-		try {
-			await loadSound(name, url);
-			soundToButton[name] = id;
-		} catch (e) {
-			console.warn(`[Skip] Could not load slot ${i}`);
-		}
+		const btn = document.getElementById(`btn${i}`);
+		if (btn) btn.classList.add('btn-loading');
 	}
+
+	// Load all sounds in parallel — enable each button as it becomes ready
+	await Promise.all(
+		Object.entries(theme.sounds).map(([slot, url]) => {
+			const name = `sound${slot}`;
+			const id = `btn${slot}`;
+			return loadSound(name, url)
+				.then(() => {
+					soundToButton[name] = id;
+					const btn = document.getElementById(id);
+					if (btn) btn.classList.remove('btn-loading');
+				})
+				.catch(() => {
+					console.warn(`[Skip] Could not load slot ${slot}`);
+					const btn = document.getElementById(id);
+					if (btn) btn.classList.remove('btn-loading');
+				});
+		})
+	);
 }
 
 function startStutter(row, divisor) {
@@ -425,13 +437,11 @@ async function switchTheme(direction) {
 		img.src = theme.bgImage;
 	});
 
-	// Start loading sounds in parallel, then fade out smoothly once bg is ready
-	const soundsPromise = loadThemeSounds(theme);
+	// Reveal UI immediately — sounds load in background
 	overlay.style.transition = 'opacity 0.4s ease';
 	overlay.style.opacity = '0';
-
-	await soundsPromise;
 	container.classList.remove('switching');
+	loadThemeSounds(theme);
 }
 
 // Load sounds and bind buttons
@@ -546,13 +556,19 @@ window.addEventListener("load", async () => {
 			: masterLoopDuration * 2;
 	};
 
-	// Load initial theme
-	applyThemeColors(themes[0]);
+	// Load initial theme — show UI as soon as bg is ready, sounds load in background
+	await new Promise(resolve => {
+		if (!themes[0].bgImage) { applyThemeColors(themes[0]); resolve(); return; }
+		const img = new Image();
+		img.onload = () => { applyThemeColors(themes[0]); resolve(); };
+		img.onerror = () => { applyThemeColors(themes[0]); resolve(); };
+		img.src = themes[0].bgImage;
+	});
 	updateThemeLabels();
-	await loadThemeSounds(themes[0]);
 	const loader = document.getElementById('loader');
 	loader.style.opacity = '0';
 	setTimeout(() => loader.remove(), 300);
+	loadThemeSounds(themes[0]);
 
 	// --- Knob helpers ---
 	const KNOB_TRACK = 'M 10.69 33.31 A 16 16 0 1 1 33.31 33.31';
