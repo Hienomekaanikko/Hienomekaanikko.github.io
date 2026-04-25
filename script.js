@@ -278,6 +278,21 @@ function updateThemeLabels() {
 	document.getElementById('theme-label-right').textContent = next.name;
 }
 
+function prefetchAdjacentThemes(currentIndex) {
+	const indices = [
+		(currentIndex - 1 + themes.length) % themes.length,
+		(currentIndex + 1) % themes.length
+	];
+	for (const idx of indices) {
+		const t = themes[idx];
+		if (!t) continue;
+		Object.values(t.sounds).forEach(url => {
+			if (!bufferCache.has(url)) fetch(url).catch(() => {});
+		});
+		if (t.bgImage) fetch(t.bgImage).catch(() => {});
+	}
+}
+
 async function loadThemeSounds(theme) {
 	// Clear all stutter sources
 	for (let r = 1; r <= 5; r++) {
@@ -437,11 +452,11 @@ async function switchTheme(direction) {
 		img.src = theme.bgImage;
 	});
 
-	// Reveal UI immediately — sounds load in background
+	// Reveal UI immediately — sounds load in background, then prefetch neighbours
 	overlay.style.transition = 'opacity 0.4s ease';
 	overlay.style.opacity = '0';
 	container.classList.remove('switching');
-	loadThemeSounds(theme);
+	loadThemeSounds(theme).then(() => prefetchAdjacentThemes(currentThemeIndex));
 }
 
 // Load sounds and bind buttons
@@ -568,7 +583,7 @@ window.addEventListener("load", async () => {
 	const loader = document.getElementById('loader');
 	loader.style.opacity = '0';
 	setTimeout(() => loader.remove(), 300);
-	loadThemeSounds(themes[0]);
+	loadThemeSounds(themes[0]).then(() => prefetchAdjacentThemes(0));
 
 	// --- Knob helpers ---
 	const KNOB_TRACK = 'M 10.69 33.31 A 16 16 0 1 1 33.31 33.31';
