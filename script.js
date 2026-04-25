@@ -441,22 +441,36 @@ function tapStutter(row) {
 	}
 }
 
-// Single tap: cycle depth — update loopEnd live if stutter is running (no stop/restart)
+// Single tap: cycle depth — transition at next bar boundary to stay in sync
 function cycleStutterDepth(row) {
 	const st = rowStutter[row];
 	const idx = STUTTER_DEPTHS.indexOf(st.depth);
 	st.depth = STUTTER_DEPTHS[(idx + 1) % STUTTER_DEPTHS.length];
+
 	if (st.mode !== 0) {
-		st.mode = st.depth;
 		const active = rowActive[row];
-		if (active && st.source) {
-			const sound = sounds[active.name];
-			if (sound?.buffer) {
-				const bufDur = sound.buffer.duration / (splitActive ? 2 : 1);
-				st.source.loopEnd = bufDur / st.depth;
-			}
+		const sound = active ? sounds[active.name] : null;
+		if (sound?.buffer && st.source) {
+			const startTime = getNextStartTime();
+			const bufDur = sound.buffer.duration / (splitActive ? 2 : 1);
+			const loopLen = bufDur / st.depth;
+
+			// Stop current stutter source exactly at bar boundary
+			try { st.source.stop(startTime); } catch (e) {}
+
+			// Start new stutter source at the same bar boundary
+			const src = audioCtx.createBufferSource();
+			src.buffer = sound.buffer;
+			src.loop = true;
+			src.loopStart = 0;
+			src.loopEnd = loopLen;
+			src.connect(rowGains[row]);
+			src.start(startTime);
+			st.source = src;
+			st.mode = st.depth;
 		}
 	}
+
 	updateStutterBtn(row);
 }
 
