@@ -8,10 +8,40 @@ window.addEventListener('unload', () => {});
 const SUPABASE_URL = 'https://eavorbolhkfdluacjzvl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_T6YvgNDX-bxjrmNVd199Lw_tBhakmBV';
 const STORAGE_BASE = `${SUPABASE_URL}/storage/v1/object/public/soundpacks/`;
+const SOUNDS_STORAGE_BASE = `${SUPABASE_URL}/storage/v1/object/public/sounds/`;
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let themes = [];
 const bufferCache = new Map();
+
+async function loadCustomPack(packId) {
+	const { data: pack, error } = await db.from('custom_packs').select('id, name, grid_size, bg_image').eq('id', packId).single();
+	if (error || !pack) { console.error('Custom pack not found', error); return null; }
+
+	const { data: packSounds } = await db.from('custom_pack_sounds').select('slot, sound_id').eq('pack_id', packId);
+	if (!packSounds?.length) return null;
+
+	const soundIds = packSounds.map(ps => ps.sound_id);
+	const { data: soundRows } = await db.from('sounds').select('id, file_path').in('id', soundIds);
+	if (!soundRows?.length) return null;
+
+	const soundMap = Object.fromEntries(soundRows.map(s => [s.id, s.file_path]));
+	const sounds = {};
+	packSounds.forEach(ps => {
+		if (soundMap[ps.sound_id]) sounds[ps.slot] = SOUNDS_STORAGE_BASE + soundMap[ps.sound_id];
+	});
+
+	return {
+		id: pack.id,
+		name: pack.name,
+		gridSize: pack.grid_size,
+		colors: ['#a78bfa', '#60a5fa', '#34d399', '#fbbf24', '#f87171'],
+		bg: ['#0d001a', '#1a0035'],
+		bgImage: pack.bg_image || null,
+		bodyClass: null,
+		sounds
+	};
+}
 
 // Fetch only pack metadata upfront — sounds loaded lazily per theme
 async function fetchThemes() {
@@ -516,7 +546,28 @@ async function switchTheme(direction) {
 
 // Load sounds and bind buttons
 window.addEventListener("load", async () => {
-	await fetchThemes();
+	const customPackId = new URLSearchParams(window.location.search).get('pack');
+
+	if (customPackId) {
+		const customTheme = await loadCustomPack(customPackId);
+		if (customTheme) {
+			themes = [customTheme];
+			// Hide navigation — custom packs are standalone
+			document.getElementById('prev-btn').style.display = 'none';
+			document.getElementById('next-btn').style.display = 'none';
+			document.getElementById('theme-label-left').style.display = 'none';
+			document.getElementById('theme-label-right').style.display = 'none';
+			// Dim buttons outside this grid size
+			const active = customTheme.gridSize * customTheme.gridSize;
+			for (let i = active + 1; i <= 25; i++) {
+				const btn = document.getElementById(`btn${i}`);
+				if (btn) { btn.style.opacity = '0.15'; btn.style.pointerEvents = 'none'; }
+			}
+		}
+	} else {
+		await fetchThemes();
+	}
+
 	if (themes.length === 0) { console.error('No packs loaded from Supabase'); return; }
 
 	// --- Particle system ---

@@ -380,6 +380,61 @@
 
     <button class="btn-primary" id="upload-btn">Create Pack</button>
     <div class="status" id="upload-status"></div>
+
+    <!-- Sound Pool -->
+    <div class="card" style="margin-top:40px;">
+      <h2>Sound Pool</h2>
+
+      <div class="field">
+        <label>Default Category</label>
+        <select id="pool-category" style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#fff;font-size:14px;padding:12px 16px;outline:none;font-family:'Roboto',sans-serif;">
+          <option value="drums">Drums</option>
+          <option value="rhythm">Rhythm</option>
+          <option value="bass">Bass</option>
+          <option value="melody">Melody</option>
+          <option value="fx">FX</option>
+          <option value="vocal">Vocal</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="drop-zone" id="pool-drop-zone">
+        <p>Drop audio files here</p>
+        <small>WAV, MP3 or OGG — multiple files at once</small>
+      </div>
+      <input type="file" id="pool-file-input" multiple accept=".wav,.mp3,.ogg">
+
+      <div class="file-list" id="pool-file-list"></div>
+
+      <div class="progress-wrap" id="pool-progress-wrap" style="display:none;">
+        <div class="progress-bar"><div class="progress-fill" id="pool-progress-fill"></div></div>
+        <div class="progress-label" id="pool-progress-label"></div>
+      </div>
+
+      <button class="btn-primary" id="pool-upload-btn" style="margin-top:20px;">Upload to Sound Pool</button>
+      <div class="status" id="pool-status"></div>
+    </div>
+
+    <!-- Existing pool sounds -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h2 style="margin-bottom:0;">Pool Library</h2>
+        <select id="pool-filter" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:13px;padding:6px 12px;outline:none;">
+          <option value="">All categories</option>
+          <option value="drums">Drums</option>
+          <option value="rhythm">Rhythm</option>
+          <option value="bass">Bass</option>
+          <option value="melody">Melody</option>
+          <option value="fx">FX</option>
+          <option value="vocal">Vocal</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div id="pool-library" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="color:rgba(255,255,255,0.3);font-size:13px;">Loading…</div>
+      </div>
+    </div>
+
     <button class="btn-ghost" id="logout-btn">Sign out</button>
 
   </div>
@@ -400,6 +455,7 @@
   function showSection(loggedIn) {
     document.getElementById('login-section').style.display = loggedIn ? 'none' : 'block';
     document.getElementById('admin-section').style.display = loggedIn ? 'block' : 'none';
+    if (loggedIn) loadPoolLibrary();
   }
 
   // --- Login ---
@@ -600,6 +656,131 @@
     el.textContent = msg;
     el.style.display = 'block';
   }
+
+  // --- Sound Pool ---
+  const poolFiles = []; // { file, name, category }
+  const CATEGORIES = ['drums','rhythm','bass','melody','fx','vocal','other'];
+
+  const poolDrop = document.getElementById('pool-drop-zone');
+  const poolInput = document.getElementById('pool-file-input');
+
+  poolDrop.onclick = () => poolInput.click();
+  poolDrop.addEventListener('dragover', e => { e.preventDefault(); poolDrop.classList.add('drag-over'); });
+  poolDrop.addEventListener('dragleave', () => poolDrop.classList.remove('drag-over'));
+  poolDrop.addEventListener('drop', e => { e.preventDefault(); poolDrop.classList.remove('drag-over'); addPoolFiles([...e.dataTransfer.files]); });
+  poolInput.onchange = () => { addPoolFiles([...poolInput.files]); poolInput.value = ''; };
+
+  function addPoolFiles(files) {
+    const defaultCat = document.getElementById('pool-category').value;
+    files.forEach(file => poolFiles.push({ file, name: file.name.replace(/\.[^.]+$/, ''), category: defaultCat }));
+    renderPoolFileList();
+  }
+
+  function renderPoolFileList() {
+    const list = document.getElementById('pool-file-list');
+    list.innerHTML = '';
+    poolFiles.forEach((item, i) => {
+      const el = document.createElement('div');
+      el.className = 'file-item';
+      el.innerHTML = `
+        <span class="file-name" style="flex:1;">${item.file.name}</span>
+        <input type="text" value="${item.name}" placeholder="Name" style="width:130px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:7px;color:#fff;font-size:12px;padding:5px 8px;outline:none;" data-i="${i}" class="pool-name-input">
+        <select data-i="${i}" class="pool-cat-select" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:7px;color:#fff;font-size:12px;padding:5px 8px;outline:none;">
+          ${CATEGORIES.map(c => `<option value="${c}"${c===item.category?' selected':''}>${c}</option>`).join('')}
+        </select>
+        <button class="file-remove" data-i="${i}">✕</button>`;
+      list.appendChild(el);
+    });
+
+    list.querySelectorAll('.pool-name-input').forEach(inp => inp.oninput = () => { poolFiles[inp.dataset.i].name = inp.value; });
+    list.querySelectorAll('.pool-cat-select').forEach(sel => sel.onchange = () => { poolFiles[sel.dataset.i].category = sel.value; });
+    list.querySelectorAll('.file-remove').forEach(btn => btn.onclick = () => { poolFiles.splice(parseInt(btn.dataset.i), 1); renderPoolFileList(); });
+  }
+
+  document.getElementById('pool-upload-btn').onclick = async () => {
+    if (!poolFiles.length) return showStatus(document.getElementById('pool-status'), 'error', 'No files selected.');
+    const btn = document.getElementById('pool-upload-btn');
+    btn.disabled = true;
+    const progressWrap = document.getElementById('pool-progress-wrap');
+    const progressFill = document.getElementById('pool-progress-fill');
+    const progressLabel = document.getElementById('pool-progress-label');
+    progressWrap.style.display = 'block';
+
+    for (let i = 0; i < poolFiles.length; i++) {
+      const { file, name, category } = poolFiles[i];
+      const ext = file.name.split('.').pop();
+      const filePath = `${category}/${Date.now()}-${file.name}`;
+      progressLabel.textContent = `Uploading ${i + 1}/${poolFiles.length}: ${file.name}`;
+      progressFill.style.width = `${(i / poolFiles.length) * 100}%`;
+
+      const { error: upErr } = await db.storage.from('sounds').upload(filePath, file);
+      if (upErr) {
+        btn.disabled = false;
+        return showStatus(document.getElementById('pool-status'), 'error', `${file.name}: ${upErr.message}`);
+      }
+      await db.from('sounds').insert({ name, category, file_path: filePath });
+    }
+
+    progressFill.style.width = '100%';
+    progressLabel.textContent = 'Done!';
+    btn.disabled = false;
+    const count = poolFiles.length;
+    poolFiles.length = 0;
+    renderPoolFileList();
+    showStatus(document.getElementById('pool-status'), 'success', `${count} sound${count > 1 ? 's' : ''} added to pool.`);
+    loadPoolLibrary();
+  };
+
+  // Pool library listing
+  async function loadPoolLibrary() {
+    const filter = document.getElementById('pool-filter').value;
+    const lib = document.getElementById('pool-library');
+    lib.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:13px;">Loading…</div>';
+
+    let query = db.from('sounds').select('*').order('category').order('name');
+    if (filter) query = query.eq('category', filter);
+    const { data: sounds, error } = await query;
+
+    if (error || !sounds?.length) {
+      lib.innerHTML = `<div style="color:rgba(255,255,255,0.3);font-size:13px;">${error ? error.message : 'No sounds in pool yet.'}</div>`;
+      return;
+    }
+
+    lib.innerHTML = '';
+    let previewAudio = null;
+
+    sounds.forEach(sound => {
+      const el = document.createElement('div');
+      el.className = 'file-item';
+      el.innerHTML = `
+        <span style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.3);width:60px;flex-shrink:0;">${sound.category}</span>
+        <span class="file-name">${sound.name}</span>
+        <button class="pool-preview-btn" data-id="${sound.id}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#fff;font-size:11px;padding:4px 10px;cursor:pointer;">▶</button>
+        <button class="pool-delete-btn" data-id="${sound.id}" data-path="${sound.file_path}" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:16px;cursor:pointer;padding:0 4px;">✕</button>`;
+      lib.appendChild(el);
+    });
+
+    lib.querySelectorAll('.pool-preview-btn').forEach(btn => {
+      btn.onclick = () => {
+        const sound = sounds.find(s => s.id === btn.dataset.id);
+        const url = `${SUPABASE_URL}/storage/v1/object/public/sounds/${sound.file_path}`;
+        if (previewAudio) { previewAudio.pause(); previewAudio = null; }
+        previewAudio = new Audio(url);
+        previewAudio.play();
+      };
+    });
+
+    lib.querySelectorAll('.pool-delete-btn').forEach(btn => {
+      btn.onclick = async () => {
+        if (!confirm('Delete this sound from the pool?')) return;
+        await db.storage.from('sounds').remove([btn.dataset.path]);
+        await db.from('sounds').delete().eq('id', btn.dataset.id);
+        loadPoolLibrary();
+      };
+    });
+  }
+
+  document.getElementById('pool-filter').onchange = loadPoolLibrary;
 
   init();
 </script>
