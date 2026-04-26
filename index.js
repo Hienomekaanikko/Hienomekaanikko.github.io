@@ -43,14 +43,15 @@ async function updateUI(session) {
         <div style="background:rgba(232,213,188,0.88); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(42,106,173,0.15); border-radius:16px; padding:36px 40px; max-width:500px;">
           <h1 style="font-family:'Poppins',sans-serif; font-weight:800; font-size:clamp(28px,4vw,42px); color:#1a3a6b; margin-bottom:32px; letter-spacing:-0.5px;">What would you like to do?</h1>
           <div style="display:flex; flex-direction:column; gap:16px;">
-            <a href="app.html" style="display:flex; align-items:center; gap:20px; background:#2a6aad; color:#fff; border-radius:14px; padding:20px 24px; text-decoration:none; transition:transform 0.15s, box-shadow 0.2s; box-shadow:0 4px 24px rgba(42,106,173,0.35);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(42,106,173,0.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 24px rgba(42,106,173,0.35)'">
-              <span style="font-size:32px; line-height:1;">▶</span>
-              <div>
+            <a href="app.html" style="display:flex; align-items:center; gap:20px; background:linear-gradient(135deg,#2a7fe0 0%,#1a5ab8 100%); color:#fff; border-radius:20px; padding:20px 24px; text-decoration:none; transition:transform 0.15s, box-shadow 0.2s; box-shadow:0 4px 20px rgba(42,106,173,0.45); position:relative; overflow:hidden;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 36px rgba(42,106,173,0.55)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(42,106,173,0.45)'">
+              <span style="font-size:32px; line-height:1; position:relative; z-index:1;">▶</span>
+              <div style="position:relative; z-index:1;">
                 <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:18px; margin-bottom:3px;">Play</div>
-                <div style="font-size:13px; opacity:0.8;">Play themed launchpads</div>
+                <div style="font-size:13px; opacity:0.85;">Play themed launchpads</div>
               </div>
+              <div style="position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.15) 0%,transparent 60%); pointer-events:none;"></div>
             </a>
-            <a href="studio.html" style="display:flex; align-items:center; gap:20px; background:rgba(26,42,74,0.07); color:#1a3a6b; border:1px solid rgba(42,106,173,0.2); border-radius:14px; padding:20px 24px; text-decoration:none; transition:transform 0.15s, background 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.background='rgba(26,42,74,0.12)'" onmouseout="this.style.transform='';this.style.background='rgba(26,42,74,0.07)'">
+            <a href="studio.html" style="display:flex; align-items:center; gap:20px; background:rgba(255,255,255,0.45); color:#1a3a6b; border:1px solid rgba(42,106,173,0.18); border-radius:20px; padding:20px 24px; text-decoration:none; transition:transform 0.15s, background 0.2s, box-shadow 0.2s; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);" onmouseover="this.style.transform='translateY(-2px)';this.style.background='rgba(255,255,255,0.65)';this.style.boxShadow='0 6px 24px rgba(26,42,74,0.12)'" onmouseout="this.style.transform='';this.style.background='rgba(255,255,255,0.45)';this.style.boxShadow=''">
               <span style="font-size:32px; line-height:1;">🎛️</span>
               <div>
                 <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:18px; margin-bottom:3px;">Launchpad Studio</div>
