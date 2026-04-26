@@ -527,6 +527,9 @@ body.edit-mode .container .btn.upload-done a::after {
 .theme-nav.left  { left: 32px; }
 .theme-nav.right { right: 32px; }
 
+/* Row wrapper only used on mobile; hidden on desktop */
+.theme-nav-row { display: none; }
+
 .nav-btn {
   width: 52px;
   height: 52px;
@@ -872,7 +875,20 @@ body.kids-theme #animals-bg {
     height: 7px;
   }
 
-  /* Theme nav arrows — tuck closer to edges */
-  .theme-nav.left { left: 4px; }
-  .theme-nav.right { right: 4px; }
+  /* Theme nav arrows — below the grid */
+  .theme-nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: calc(100vw - 24px);
+    max-width: 680px;
+  }
+
+  .theme-nav {
+    position: static;
+    transform: none;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 8px;
+  }
 }
