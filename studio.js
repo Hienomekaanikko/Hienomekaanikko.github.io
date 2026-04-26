@@ -57,7 +57,7 @@ function showBuilder() {
   // Update topbar with name input
   document.getElementById('topbar-right').innerHTML = `
     <input class="topbar-name" id="pack-name" value="${document.getElementById('setup-name').value}" maxlength="40">
-    <a href="index.html" style="font-size:12px;color:rgba(255,255,255,0.3);text-decoration:none;letter-spacing:0.5px;" onmouseover="this.style.color='rgba(255,255,255,0.6)'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">← Home</a>`;
+    <a href="index.html" style="font-size:13px;color:rgba(26,42,74,0.5);text-decoration:none;letter-spacing:0.5px;font-weight:500;" onmouseover="this.style.color='#1a2a4a'" onmouseout="this.style.color='rgba(26,42,74,0.5)'">← Home</a>`;
 
   slots = {};
   selectedSound = null;
@@ -110,7 +110,7 @@ function resetToSetup() {
   document.getElementById('builder-screen').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'flex';
   document.getElementById('topbar-right').innerHTML = `
-    <a href="index.html" style="font-size:12px;color:rgba(255,255,255,0.3);text-decoration:none;letter-spacing:0.5px;" onmouseover="this.style.color='rgba(255,255,255,0.6)'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">← Home</a>`;
+    <a href="index.html" style="font-size:13px;color:rgba(26,42,74,0.5);text-decoration:none;letter-spacing:0.5px;font-weight:500;" onmouseover="this.style.color='#1a2a4a'" onmouseout="this.style.color='rgba(26,42,74,0.5)'">← Home</a>`;
 }
 
 // --- Grid ---
