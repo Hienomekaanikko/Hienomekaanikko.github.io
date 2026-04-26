@@ -275,12 +275,12 @@ body {
 .studio-grid {
   display: grid;
   gap: 10px;
-  padding: 18px;
-  background: rgba(20,30,60,0.55);
-  border: 1px solid rgba(42,106,173,0.25);
+  padding: 20px;
+  background: rgba(42,90,160,0.45);
+  border: 1px solid rgba(58,184,208,0.35);
   border-radius: 20px;
   backdrop-filter: blur(12px);
-  box-shadow: 0 20px 60px rgba(26,42,74,0.25);
+  box-shadow: 0 20px 60px rgba(26,58,120,0.3);
 }
 
 /* Launchpad-style slots — fills grid cell set by JS */
@@ -293,10 +293,10 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 13px;
-  background: rgba(255,255,255,0.08);
-  border-top: 1px solid rgba(255,255,255,0.14);
-  border-bottom: 1px solid rgba(0,0,0,0.3);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  background: rgba(58,110,190,0.35);
+  border-top: 1px solid rgba(100,200,230,0.28);
+  border-bottom: 1px solid rgba(26,58,120,0.3);
+  box-shadow: 0 4px 10px rgba(26,58,120,0.2);
   overflow: hidden;
   transition: box-shadow 0.2s, background 0.2s;
   display: flex;
@@ -313,7 +313,7 @@ body {
   position: absolute;
   top: -30%; left: -80%;
   width: 120%; height: 160%;
-  background: linear-gradient(120deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.07) 50%, transparent 100%);
+  background: linear-gradient(120deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
   pointer-events: none;
 }
 
@@ -349,16 +349,15 @@ body {
 }
 
 .studio-slot.has-sound .studio-slot-inner {
-  background: rgba(255,255,255,0.12);
-  box-shadow: 0 0 18px rgba(255,255,255,0.07), 0 4px 12px rgba(0,0,0,0.25);
+  box-shadow: 0 0 16px rgba(58,184,208,0.5), 0 0 32px rgba(58,184,208,0.25);
 }
 
 .studio-slot.drop-target .studio-slot-inner {
-  background: rgba(42,106,173,0.3);
+  background: rgba(58,110,190,0.6);
   transform: scale(1.05);
 }
 
-.studio-slot:hover .studio-slot-inner { background: rgba(255,255,255,0.13); }
+.studio-slot:hover .studio-slot-inner { background: rgba(58,110,190,0.5); }
 .studio-slot:hover::before, .studio-slot:hover::after { opacity: 0.9; }
 
 .studio-slot .slot-num {
