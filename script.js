@@ -264,9 +264,9 @@ function stopLoop(name, force = false) {
 }
 
 // Toggle loop on click
-function toggleLoop(name, buttonId) {
+async function toggleLoop(name, buttonId) {
 	if (audioCtx.state === 'suspended') {
-		audioCtx.resume();
+		await audioCtx.resume();
 	}
 
 	const row = buttonRows[buttonId];
@@ -662,7 +662,17 @@ window.addEventListener("load", async () => {
 		const name = `sound${i}`;
 		const id = `btn${i}`;
 		const btn = document.getElementById(id);
-		if (btn) btn.onclick = () => { toggleLoop(name, id); triggerBurst(btn); };
+		if (!btn) continue;
+		// touchstart resumes AudioContext immediately within the gesture (required by iOS Safari)
+		btn.addEventListener('touchstart', () => {
+			if (audioCtx.state === 'suspended') audioCtx.resume();
+		}, { passive: true });
+		btn.addEventListener('touchend', e => {
+			e.preventDefault();
+			toggleLoop(name, id);
+			triggerBurst(btn);
+		}, { passive: false });
+		btn.onclick = () => { toggleLoop(name, id); triggerBurst(btn); };
 	}
 
 	// Bind nav buttons
