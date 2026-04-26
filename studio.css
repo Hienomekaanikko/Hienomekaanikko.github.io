@@ -283,12 +283,10 @@ body {
   box-shadow: 0 20px 60px rgba(26,42,74,0.25);
 }
 
-/* Launchpad-style slots */
+/* Launchpad-style slots — fills grid cell set by JS */
 .studio-slot {
   position: relative;
   cursor: pointer;
-  width: 88px;
-  height: 88px;
 }
 
 .studio-slot-inner {
