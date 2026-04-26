@@ -527,8 +527,8 @@ body.edit-mode .container .btn.upload-done a::after {
 .theme-nav.left  { left: 32px; }
 .theme-nav.right { right: 32px; }
 
-/* Row wrapper only used on mobile; hidden on desktop */
-.theme-nav-row { display: none; }
+/* Row wrapper — zero height on desktop since children are position:fixed */
+.theme-nav-row { display: block; }
 
 .nav-btn {
   width: 52px;
