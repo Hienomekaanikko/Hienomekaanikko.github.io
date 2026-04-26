@@ -811,3 +811,68 @@ body.kids-theme #animals-bg {
 .row-color-3 .knob-fill { stroke: var(--c3); filter: drop-shadow(0 0 3px var(--c3)); }
 .row-color-4 .knob-fill { stroke: var(--c4); filter: drop-shadow(0 0 3px var(--c4)); }
 .row-color-5 .knob-fill { stroke: var(--c5); filter: drop-shadow(0 0 3px var(--c5)); }
+
+/* ── Mobile player ─────────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* Hide secondary controls */
+  .knob-col-wrap { display: none; }
+  #transport-controls { display: none; }
+
+  /* Top bar — stack home + auth so they don't overlap */
+  .home-btn {
+    top: 12px;
+    left: 12px;
+    font-size: 12px;
+    padding: 7px 12px;
+  }
+
+  #auth-btn-wrap {
+    top: 12px;
+    right: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: calc(100vw - 120px);
+    gap: 6px;
+  }
+
+  .auth-btn { font-size: 12px; padding: 7px 12px; }
+
+  /* Grid wrapper */
+  .grid-wrapper { padding: 70px 12px 20px; }
+
+  #master-bar {
+    width: calc(100vw - 24px);
+    max-width: 680px;
+  }
+
+  /* Fluid 5-column grid */
+  .container {
+    width: calc(100vw - 24px);
+    max-width: 680px;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: unset;
+    gap: clamp(5px, 1.8vw, 20px);
+  }
+
+  /* Square buttons via aspect-ratio */
+  .container .btn {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  .container .btn a {
+    border-radius: clamp(8px, 2.5vw, 20px);
+  }
+
+  /* Tone down bar decorations at small sizes */
+  .container .btn::before,
+  .container .btn::after {
+    width: 20px;
+    height: 7px;
+  }
+
+  /* Theme nav arrows — tuck closer to edges */
+  .theme-nav.left { left: 4px; }
+  .theme-nav.right { right: 4px; }
+}
