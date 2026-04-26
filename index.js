@@ -83,11 +83,7 @@ async function loadMyLaunchpads(userId) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  if (!packs?.length) {
-    section.style.display = 'block';
-    grid.innerHTML = '<p class="my-packs-empty">No launchpads yet — <a href="studio.html" style="color:#2a6aad;">create your first one</a>.</p>';
-    return;
-  }
+  if (!packs?.length) return;
 
   section.style.display = 'block';
   grid.innerHTML = '';
@@ -113,7 +109,7 @@ async function loadMyLaunchpads(userId) {
       await db.from('custom_packs').delete().eq('id', pack.id);
       card.remove();
       const remaining = grid.querySelectorAll('.my-pack-card');
-      if (!remaining.length) grid.innerHTML = '<p class="my-packs-empty">No launchpads yet — <a href="studio.html" style="color:#2a6aad;">create your first one</a>.</p>';
+      if (!remaining.length) section.style.display = 'none';
     };
 
     card.querySelector('.my-pack-share').onclick = (e) => {
