@@ -84,9 +84,8 @@ async function loadMyLaunchpads(userId) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  if (!packs?.length) return;
-
   section.style.display = 'block';
+  if (!packs?.length) return;
   grid.innerHTML = '';
 
   packs.forEach(pack => {
