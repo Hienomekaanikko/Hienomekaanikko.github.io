@@ -293,7 +293,7 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 13px;
-  background: rgba(58,110,190,0.35);
+  background: rgba(100,160,230,0.55);
   border-top: 1px solid rgba(100,200,230,0.28);
   border-bottom: 1px solid rgba(26,58,120,0.3);
   box-shadow: 0 4px 10px rgba(26,58,120,0.2);
@@ -353,11 +353,11 @@ body {
 }
 
 .studio-slot.drop-target .studio-slot-inner {
-  background: rgba(58,110,190,0.6);
+  background: rgba(120,180,240,0.75);
   transform: scale(1.05);
 }
 
-.studio-slot:hover .studio-slot-inner { background: rgba(58,110,190,0.5); }
+.studio-slot:hover .studio-slot-inner { background: rgba(120,180,240,0.65); }
 .studio-slot:hover::before, .studio-slot:hover::after { opacity: 0.9; }
 
 .studio-slot .slot-num {
