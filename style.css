@@ -815,6 +815,11 @@ body.kids-theme #animals-bg {
 .row-color-4 .knob-fill { stroke: var(--c4); filter: drop-shadow(0 0 3px var(--c4)); }
 .row-color-5 .knob-fill { stroke: var(--c5); filter: drop-shadow(0 0 3px var(--c5)); }
 
+/* ── Mobile controls strip (hidden on desktop) ─────────────── */
+#mobile-controls {
+  display: none;
+}
+
 /* ── Mobile player ─────────────────────────────────────────── */
 @media (max-width: 600px) {
   /* Hide secondary controls */
@@ -890,5 +895,66 @@ body.kids-theme #animals-bg {
     flex-direction: row-reverse;
     align-items: center;
     gap: 8px;
+  }
+
+  /* Controls strip */
+  #mobile-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: calc(100vw - 24px);
+    max-width: 680px;
+  }
+
+  .mob-tabs {
+    display: flex;
+    gap: 6px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 4px;
+    width: 100%;
+  }
+
+  .mob-tab {
+    flex: 1;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    color: rgba(255,255,255,0.45);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 7px 0;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .mob-tab.active {
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+  }
+
+  .mob-panel {
+    display: none;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    padding: 6px 0;
+  }
+
+  .mob-panel.active { display: flex; }
+
+  /* Knobs inside strip: slightly smaller */
+  .mob-panel .knob-wrap { width: 38px; height: 38px; }
+  .mob-panel .knob-svg  { width: 38px; height: 38px; }
+
+  /* Stutter buttons inside strip */
+  .mob-panel .stutter-btn {
+    width: 48px;
+    height: 38px;
+    font-size: 10px;
   }
 }

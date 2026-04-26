@@ -276,8 +276,10 @@ function toggleLoop(name, buttonId) {
 		const st = rowStutter[row];
 		if (st.source) { try { st.source.stop(); } catch (e) {} st.source = null; }
 		st.mode = 0;
-		const stutterBtn = document.getElementById(`stutter-btn-${row}`);
-		if (stutterBtn) { stutterBtn.textContent = 'STU'; stutterBtn.classList.remove('stutter-active'); }
+		for (const id of [`stutter-btn-${row}`, `mob-stutter-btn-${row}`]) {
+			const b = document.getElementById(id);
+			if (b) { b.textContent = 'STU'; b.classList.remove('stutter-active'); }
+		}
 	}
 
 	const current = rowActive[row];
@@ -366,8 +368,10 @@ async function loadThemeSounds(theme) {
 		const st = rowStutter[r];
 		if (st.source) { try { st.source.stop(); } catch (e) {} st.source = null; }
 		st.mode = 0;
-		const btn = document.getElementById(`stutter-btn-${r}`);
-		if (btn) { btn.textContent = 'STU'; btn.classList.remove('stutter-active'); }
+		for (const id of [`stutter-btn-${r}`, `mob-stutter-btn-${r}`]) {
+			const btn = document.getElementById(id);
+			if (btn) { btn.textContent = 'STU'; btn.classList.remove('stutter-active'); }
+		}
 	}
 
 	// Stop and clear all active sounds
@@ -452,10 +456,14 @@ function releaseStutter(row) {
 
 function updateStutterBtn(row) {
 	const st = rowStutter[row];
-	const btn = document.getElementById(`stutter-btn-${row}`);
-	if (!btn) return;
-	btn.textContent = `1/${st.depth}`;
-	btn.classList.toggle('stutter-active', st.mode !== 0);
+	const label = `1/${st.depth}`;
+	const active = st.mode !== 0;
+	for (const id of [`stutter-btn-${row}`, `mob-stutter-btn-${row}`]) {
+		const btn = document.getElementById(id);
+		if (!btn) continue;
+		btn.textContent = label;
+		btn.classList.toggle('stutter-active', active);
+	}
 }
 
 // Short tap: toggle stutter on/off at current depth
@@ -767,47 +775,36 @@ window.addEventListener("load", async () => {
 	// Build and wire knobs
 	const volCol    = document.getElementById('vol-knobs');
 	const filterCol = document.getElementById('filter-knobs');
+	const mobVolPanel = document.getElementById('mob-vol-panel');
+	const mobLpPanel  = document.getElementById('mob-lp-panel');
+	const mobStuPanel = document.getElementById('mob-stu-panel');
 
 	for (let row = 1; row <= 5; row++) {
 		const colorClass = `row-color-${row}`;
 
-		const volWrap = createKnob(`vol-wrap-${row}`, colorClass);
+		// VOL
+		const volWrap    = createKnob(`vol-wrap-${row}`, colorClass);
+		const mobVolWrap = createKnob(`mob-vol-wrap-${row}`, colorClass);
 		volCol.appendChild(volWrap);
+		mobVolPanel.appendChild(mobVolWrap);
 		let volVal = 100;
-		setupKnobDrag(volWrap,
-			() => volVal,
-			v => {
-				volVal = v;
-				rowVolumes[row] = v / 100;
-				rowGains[row].gain.setValueAtTime(v / 100, audioCtx.currentTime);
-				updateKnobVisual(volWrap, v);
-			}
-		);
+		setupKnobDrag(volWrap,    () => volVal, v => { volVal = v; rowVolumes[row] = v / 100; rowGains[row].gain.setValueAtTime(v / 100, audioCtx.currentTime); updateKnobVisual(volWrap, v); updateKnobVisual(mobVolWrap, v); });
+		setupKnobDrag(mobVolWrap, () => volVal, v => { volVal = v; rowVolumes[row] = v / 100; rowGains[row].gain.setValueAtTime(v / 100, audioCtx.currentTime); updateKnobVisual(volWrap, v); updateKnobVisual(mobVolWrap, v); });
 
-		const filterWrap = createKnob(`filter-wrap-${row}`, colorClass);
+		// LP filter
+		const filterWrap    = createKnob(`filter-wrap-${row}`, colorClass);
+		const mobFilterWrap = createKnob(`mob-filter-wrap-${row}`, colorClass);
 		filterCol.appendChild(filterWrap);
+		mobLpPanel.appendChild(mobFilterWrap);
 		let filterVal = 100;
-		setupKnobDrag(filterWrap,
-			() => filterVal,
-			v => {
-				filterVal = v;
-				rowFilters[row].frequency.setValueAtTime(200 * Math.pow(100, v / 100), audioCtx.currentTime);
-				updateKnobVisual(filterWrap, v);
-			}
-		);
+		setupKnobDrag(filterWrap,    () => filterVal, v => { filterVal = v; rowFilters[row].frequency.setValueAtTime(200 * Math.pow(100, v / 100), audioCtx.currentTime); updateKnobVisual(filterWrap, v); updateKnobVisual(mobFilterWrap, v); });
+		setupKnobDrag(mobFilterWrap, () => filterVal, v => { filterVal = v; rowFilters[row].frequency.setValueAtTime(200 * Math.pow(100, v / 100), audioCtx.currentTime); updateKnobVisual(filterWrap, v); updateKnobVisual(mobFilterWrap, v); });
 	}
 
 	// Build stutter buttons (single tap = cycle depth, double tap = toggle on/off)
 	const stutterCol = document.getElementById('stutter-btns');
 	for (let row = 1; row <= 5; row++) {
-		const btn = document.createElement('button');
-		btn.id = `stutter-btn-${row}`;
-		btn.className = 'stutter-btn';
-		btn.textContent = '1/4';
-
-		let tapCount = 0;
-		let tapTimer = null;
-
+		let tapCount = 0, tapTimer = null;
 		const onTap = () => {
 			if (audioCtx.state === 'suspended') audioCtx.resume();
 			tapCount++;
@@ -819,11 +816,29 @@ window.addEventListener("load", async () => {
 			}, 280);
 		};
 
-		btn.addEventListener('click', onTap);
-		btn.addEventListener('touchend', e => { e.preventDefault(); onTap(); }, { passive: false });
+		const makeBtn = (id) => {
+			const btn = document.createElement('button');
+			btn.id = id;
+			btn.className = 'stutter-btn';
+			btn.textContent = '1/4';
+			btn.addEventListener('click', onTap);
+			btn.addEventListener('touchend', e => { e.preventDefault(); onTap(); }, { passive: false });
+			return btn;
+		};
 
-		stutterCol.appendChild(btn);
+		stutterCol.appendChild(makeBtn(`stutter-btn-${row}`));
+		mobStuPanel.appendChild(makeBtn(`mob-stutter-btn-${row}`));
 	}
+
+	// Mobile tab switching
+	document.querySelectorAll('.mob-tab').forEach(tab => {
+		tab.addEventListener('click', () => {
+			document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+			document.querySelectorAll('.mob-panel').forEach(p => p.classList.remove('active'));
+			tab.classList.add('active');
+			document.getElementById(`mob-${tab.dataset.panel}-panel`).classList.add('active');
+		});
+	});
 
 	requestAnimationFrame(updateProgressBars);
 
