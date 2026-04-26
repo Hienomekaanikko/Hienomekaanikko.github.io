@@ -116,7 +116,10 @@ function resetToSetup() {
 // --- Grid ---
 function buildGrid() {
   const grid = document.getElementById('studio-grid');
-  const slotSize = gridSize === 3 ? 120 : gridSize === 4 ? 110 : 100;
+  const mobile = window.innerWidth <= 768;
+  const slotSize = mobile
+    ? (gridSize === 3 ? 100 : gridSize === 4 ? 76 : 62)
+    : (gridSize === 3 ? 120 : gridSize === 4 ? 110 : 100);
   grid.style.gridTemplateColumns = `repeat(${gridSize}, ${slotSize}px)`;
   grid.style.gridTemplateRows = `repeat(${gridSize}, ${slotSize}px)`;
   grid.innerHTML = '';

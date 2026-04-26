@@ -900,3 +900,26 @@ footer {
   color: rgba(26,42,74,0.35);
   font-size: 13px;
 }
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  body { background: url('assets/landing-page.webp') top center / cover no-repeat scroll; }
+  nav { padding: 16px 20px; }
+  .section { padding: 0 16px 60px; }
+  .section-num { display: none; }
+  .section-header { flex-direction: column; gap: 8px; }
+  .hero { padding: 60px 20px 40px; }
+  .hero-title { font-size: clamp(32px, 10vw, 56px); }
+  .hero-sub { font-size: 15px; }
+  .hero-btns { flex-direction: column; align-items: center; }
+  .hero-btns a { width: 100%; max-width: 300px; text-align: center; }
+  .packs-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pack-card { padding: 16px; }
+  .pad-mock { gap: 5px; padding: 14px; }
+  footer { padding: 24px 20px; }
+}
+
+@media (max-width: 480px) {
+  .packs-grid { grid-template-columns: 1fr; }
+  .pad-mock { gap: 4px; padding: 10px; }
+}

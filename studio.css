@@ -606,3 +606,51 @@ body {
 }
 
 .modal-actions { display: flex; gap: 10px; justify-content: center; }
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  body { background: url('assets/landing-page.webp') top center / cover no-repeat scroll; }
+
+  .topbar { padding: 0 16px; }
+
+  .studio-grid { gap: 6px; padding: 12px; }
+  .studio-slot .slot-num { font-size: 8px; }
+  .studio-slot .slot-sound-name { font-size: 8px; }
+  .studio-slot .slot-empty-icon { font-size: 14px; }
+  .studio-slot .slot-remove { font-size: 9px; width: 14px; height: 14px; top: 2px; right: 2px; }
+
+  #setup-screen { padding: 80px 16px 40px; }
+  .setup-card { padding: 28px 20px; }
+  .grid-size-picker { gap: 8px; }
+  .grid-size-btn { padding: 12px 10px; font-size: 14px; }
+
+  #builder-screen {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    padding-top: 62px;
+  }
+
+  .grid-panel {
+    flex: none;
+    width: 100%;
+    padding: 16px;
+    border-right: none;
+    border-bottom: 1px solid rgba(42,106,173,0.2);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: auto;
+  }
+
+  .pool-panel {
+    width: 100%;
+    height: 50vh;
+    border-left: none;
+    flex-shrink: 0;
+  }
+
+  .grid-actions { flex-wrap: wrap; gap: 8px; }
+  .grid-actions .btn { font-size: 12px; padding: 8px 12px; }
+
+  .modal { padding: 28px 20px; }
+}
