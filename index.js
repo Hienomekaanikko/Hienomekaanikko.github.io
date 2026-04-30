@@ -40,10 +40,10 @@ async function updateUI(session) {
 
     document.querySelector('.hero-inner').innerHTML = `
       <div class="hero-copy" style="perspective:none;">
-        <div style="background:rgba(232,213,188,0.88); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(42,106,173,0.15); border-radius:16px; padding:36px 40px; max-width:500px;">
-          <h1 style="font-family:'Poppins',sans-serif; font-weight:800; font-size:clamp(28px,4vw,42px); color:#1a3a6b; margin-bottom:32px; letter-spacing:-0.5px;">What would you like to do?</h1>
+        <div style="background:rgba(232,213,188,0.88); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(245,158,11,0.2); border-radius:16px; padding:36px 40px; max-width:500px;">
+          <h1 style="font-family:'Poppins',sans-serif; font-weight:800; font-size:clamp(28px,4vw,42px); color:#0d9488; margin-bottom:32px; letter-spacing:-0.5px;">What would you like to do?</h1>
           <div style="display:flex; flex-direction:column; gap:16px;">
-            <a href="app.html" style="display:flex; align-items:center; gap:20px; background:linear-gradient(135deg,#2a7fe0 0%,#1a5ab8 100%); color:#fff; border-radius:20px; padding:20px 24px; text-decoration:none; transition:transform 0.15s, box-shadow 0.2s; box-shadow:0 4px 20px rgba(42,106,173,0.45); position:relative; overflow:hidden;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 36px rgba(42,106,173,0.55)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(42,106,173,0.45)'">
+            <a href="app.html" style="display:flex; align-items:center; gap:20px; background:linear-gradient(135deg,#f59e0b 0%,#f97316 100%); color:#1a0800; border-radius:20px; padding:20px 24px; text-decoration:none; transition:transform 0.15s, box-shadow 0.2s; box-shadow:0 4px 20px rgba(245,158,11,0.5); position:relative; overflow:hidden;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 36px rgba(245,158,11,0.6)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(245,158,11,0.5)'">
               <span style="font-size:32px; line-height:1; position:relative; z-index:1;">▶</span>
               <div style="position:relative; z-index:1;">
                 <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:18px; margin-bottom:3px;">Play</div>
@@ -51,7 +51,7 @@ async function updateUI(session) {
               </div>
               <div style="position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.15) 0%,transparent 60%); pointer-events:none;"></div>
             </a>
-            <a href="studio.html" style="display:flex; align-items:center; gap:20px; background:rgba(255,255,255,0.45); color:#1a3a6b; border:1px solid rgba(42,106,173,0.18); border-radius:20px; padding:20px 24px; text-decoration:none; transition:transform 0.15s, background 0.2s, box-shadow 0.2s; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);" onmouseover="this.style.transform='translateY(-2px)';this.style.background='rgba(255,255,255,0.65)';this.style.boxShadow='0 6px 24px rgba(26,42,74,0.12)'" onmouseout="this.style.transform='';this.style.background='rgba(255,255,255,0.45)';this.style.boxShadow=''">
+            <a href="studio.html" style="display:flex; align-items:center; gap:20px; background:rgba(255,255,255,0.45); color:#0d9488; border:1px solid rgba(245,158,11,0.2); border-radius:20px; padding:20px 24px; text-decoration:none; transition:transform 0.15s, background 0.2s, box-shadow 0.2s; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);" onmouseover="this.style.transform='translateY(-2px)';this.style.background='rgba(255,255,255,0.65)';this.style.boxShadow='0 6px 24px rgba(26,42,74,0.12)'" onmouseout="this.style.transform='';this.style.background='rgba(255,255,255,0.45)';this.style.boxShadow=''">
               <span style="font-size:32px; line-height:1;">🎛️</span>
               <div>
                 <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:18px; margin-bottom:3px;">Launchpad Studio</div>
@@ -287,3 +287,75 @@ if (flipBtn) flipBtn.onclick = () => {
   const flipped = card.classList.toggle('flipped');
   btn.textContent = flipped ? '←' : '→';
 };
+
+// Ambient rising particles
+(function () {
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  const particles = [];
+  const colors = ['#14b8a6','#f59e0b','#f97316','#06b6d4','#0d9488'];
+
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const goldenColors = ['#f5c432','#f59e0b','#fde68a','#f97316'];
+
+  function addParticle() {
+    if (particles.filter(p => !p.falling).length >= 55) return;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: canvas.height + 5,
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: -(Math.random() * 0.7 + 0.25),
+      color,
+      size: Math.random() * 1.8 + 0.4,
+      life: 0.65 + Math.random() * 0.35,
+      decay: 0.0014 + Math.random() * 0.001,
+      falling: false,
+    });
+  }
+
+  function addFalling() {
+    if (particles.filter(p => p.falling).length >= 35) return;
+    const color = goldenColors[Math.floor(Math.random() * goldenColors.length)];
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: -5,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: Math.random() * 0.6 + 0.2,
+      color,
+      size: Math.random() * 1.5 + 0.3,
+      life: 0.65 + Math.random() * 0.35,
+      decay: 0.0012 + Math.random() * 0.001,
+      falling: true,
+    });
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    addParticle();
+    addFalling();
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= p.decay;
+      if (p.life <= 0 || p.y < -20 || p.y > canvas.height + 20) { particles.splice(i, 1); continue; }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.life * 0.75);
+      ctx.fillStyle = p.color;
+      ctx.shadowBlur = 5;
+      ctx.shadowColor = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+})();
+

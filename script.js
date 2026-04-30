@@ -1,8 +1,8 @@
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let audioCtx = null;
 const sounds = {};
 const soundToButton = {};
 
-window.addEventListener('pagehide', () => audioCtx.close());
+window.addEventListener('pagehide', () => audioCtx?.close());
 window.addEventListener('unload', () => {});
 
 const SUPABASE_URL = 'https://eavorbolhkfdluacjzvl.supabase.co';
@@ -124,18 +124,6 @@ let currentFadeTime = 0;
 
 const rowFilters = {};
 const rowGains = {};
-for (let r = 1; r <= 5; r++) {
-	const f = audioCtx.createBiquadFilter();
-	f.type = 'lowpass';
-	f.frequency.value = 20000;
-	f.Q.value = 0.5;
-	f.connect(audioCtx.destination);
-	rowFilters[r] = f;
-
-	const g = audioCtx.createGain();
-	g.connect(rowFilters[r]);
-	rowGains[r] = g;
-}
 
 // Load a single sound
 async function loadSound(name, url) {
@@ -554,6 +542,29 @@ async function switchTheme(direction) {
 
 // Load sounds and bind buttons
 window.addEventListener("load", async () => {
+	const loader = document.getElementById('loader');
+	let loaderDismissed = false;
+	function dismissLoader() {
+		if (loaderDismissed || !loader) return;
+		loaderDismissed = true;
+		loader.style.opacity = '0';
+		setTimeout(() => loader.remove(), 650);
+	}
+
+	try {
+	audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+	for (let r = 1; r <= 5; r++) {
+		const f = audioCtx.createBiquadFilter();
+		f.type = 'lowpass';
+		f.frequency.value = 20000;
+		f.Q.value = 0.5;
+		f.connect(audioCtx.destination);
+		rowFilters[r] = f;
+		const g = audioCtx.createGain();
+		g.connect(rowFilters[r]);
+		rowGains[r] = g;
+	}
+
 	const customPackId = new URLSearchParams(window.location.search).get('pack');
 
 	if (customPackId) {
@@ -576,7 +587,7 @@ window.addEventListener("load", async () => {
 		await fetchThemes();
 	}
 
-	if (themes.length === 0) { console.error('No packs loaded from Supabase'); return; }
+	if (themes.length === 0) { console.error('No packs loaded from Supabase'); dismissLoader(); return; }
 
 	// --- Particle system ---
 	const pCanvas = document.getElementById('particle-canvas');
@@ -704,9 +715,7 @@ window.addEventListener("load", async () => {
 		img.src = themes[0].bgImage;
 	});
 	updateThemeLabels();
-	const loader = document.getElementById('loader');
-	loader.style.opacity = '0';
-	setTimeout(() => loader.remove(), 300);
+	dismissLoader();
 	loadThemeSounds(themes[0]).then(() => prefetchAdjacentThemes(0));
 
 	// --- Knob helpers ---
@@ -1145,4 +1154,9 @@ window.addEventListener("load", async () => {
 		updateSubscribeBtn(session);
 		setEditVisible(session);
 	});
+	} catch (err) {
+		console.error('Launchpad init error:', err);
+	} finally {
+		dismissLoader();
+	}
 });

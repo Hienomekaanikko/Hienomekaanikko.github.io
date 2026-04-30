@@ -16,7 +16,7 @@
 
 body {
   font-family: "Roboto", sans-serif;
-  background: url('assets/landing-page.webp') center/cover no-repeat fixed;
+  background: url('assets/landing.jpg') center/cover no-repeat fixed;
   min-height: 100vh;
   color: #1a2a4a;
   overflow-x: hidden;
@@ -609,7 +609,7 @@ body {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  body { background: url('assets/landing-page.webp') top center / cover no-repeat scroll; }
+  body { background: url('assets/landing.jpg') top center / cover no-repeat scroll; }
 
   .topbar { padding: 0 16px; }
 
