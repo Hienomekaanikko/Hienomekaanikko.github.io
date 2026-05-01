@@ -674,12 +674,9 @@ window.addEventListener("load", async () => {
 		const id = `btn${i}`;
 		const btn = document.getElementById(id);
 		if (!btn) continue;
-		// touchstart resumes AudioContext immediately within the gesture (required by iOS Safari)
-		btn.addEventListener('touchstart', () => {
-			if (audioCtx.state === 'suspended') audioCtx.resume();
-		}, { passive: true });
 		btn.addEventListener('touchend', e => {
 			e.preventDefault();
+			if (audioCtx.state === 'suspended') audioCtx.resume();
 			toggleLoop(name, id);
 			triggerBurst(btn);
 		}, { passive: false });
