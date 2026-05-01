@@ -961,7 +961,7 @@ footer {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  body { background: #0d1a15 url('assets/landing.jpg') top center / cover no-repeat scroll; }
+  body { background: #0d1a15 url('assets/landing.jpg') center / contain no-repeat scroll; }
   nav { padding: 16px 20px; }
   .section { padding: 0 16px 60px; }
   .section-num { display: none; }
