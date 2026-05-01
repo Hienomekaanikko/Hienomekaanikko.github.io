@@ -548,7 +548,7 @@ window.addEventListener("load", async () => {
 		if (loaderDismissed || !loader) return;
 		loaderDismissed = true;
 		loader.style.opacity = '0';
-		setTimeout(() => loader.remove(), 650);
+		setTimeout(() => loader.remove(), 1050);
 	}
 
 	try {
@@ -706,7 +706,7 @@ window.addEventListener("load", async () => {
 			: masterLoopDuration * 2;
 	};
 
-	// Load initial theme — show UI as soon as bg is ready, sounds load in background
+	// Load initial theme — wait for bg image and all sounds before dismissing loader
 	await new Promise(resolve => {
 		if (!themes[0].bgImage) { applyThemeColors(themes[0]); resolve(); return; }
 		const img = new Image();
@@ -715,8 +715,12 @@ window.addEventListener("load", async () => {
 		img.src = themes[0].bgImage;
 	});
 	updateThemeLabels();
+	await Promise.all([
+		loadThemeSounds(themes[0]),
+		new Promise(r => setTimeout(r, 1000))
+	]);
 	dismissLoader();
-	loadThemeSounds(themes[0]).then(() => prefetchAdjacentThemes(0));
+	prefetchAdjacentThemes(0);
 
 	// --- Knob helpers ---
 	const KNOB_TRACK = 'M 10.69 33.31 A 16 16 0 1 1 33.31 33.31';

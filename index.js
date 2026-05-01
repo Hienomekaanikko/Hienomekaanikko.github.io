@@ -359,3 +359,40 @@ if (flipBtn) flipBtn.onclick = () => {
   animate();
 })();
 
+// Play button exit animation — elements slide aside before navigating
+document.addEventListener('click', function(e) {
+  const link = e.target.closest('a[href="app.html"]');
+  if (!link) return;
+  e.preventDefault();
+  const dest = link.href;
+
+  const heroCopy = document.querySelector('.hero-copy');
+  const heroPad  = document.querySelector('.hero-pad');
+  const nav      = document.querySelector('nav');
+
+  if (heroCopy) {
+    heroCopy.style.transition = 'transform 0.5s cubic-bezier(0.4,0,1,1), opacity 0.4s ease';
+    heroCopy.style.transform  = 'translateX(-110%) scale(0.9)';
+    heroCopy.style.opacity    = '0';
+  }
+  if (heroPad) {
+    heroPad.style.transition = 'transform 0.5s cubic-bezier(0.4,0,1,1), opacity 0.4s ease';
+    heroPad.style.transform  = 'translateX(110%) rotate(-8deg) scale(0.9)';
+    heroPad.style.opacity    = '0';
+  }
+  if (nav) {
+    nav.style.transition = 'transform 0.4s ease, opacity 0.35s ease';
+    nav.style.transform  = 'translateY(-50px)';
+    nav.style.opacity    = '0';
+  }
+
+  const packsHeader = document.getElementById('packs-section-header');
+  if (packsHeader && packsHeader.getBoundingClientRect().top < window.innerHeight) {
+    packsHeader.style.transition = 'transform 0.5s cubic-bezier(0.4,0,1,1), opacity 0.4s ease';
+    packsHeader.style.transform  = 'translateY(60px) scale(0.97)';
+    packsHeader.style.opacity    = '0';
+  }
+
+  setTimeout(() => { window.location.href = dest; }, 480);
+});
+
