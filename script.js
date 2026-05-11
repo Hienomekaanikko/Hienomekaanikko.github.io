@@ -13,6 +13,7 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let themes = [];
 const bufferCache = new Map();
+const preloadedImages = new Set();
 
 async function loadCustomPack(packId) {
 	const { data: pack, error } = await db.from('custom_packs').select('id, name, grid_size, bg_image').eq('id', packId).single();
@@ -332,19 +333,30 @@ async function prefetchAdjacentThemes(currentIndex) {
 		(currentIndex - 1 + themes.length) % themes.length,
 		(currentIndex + 1) % themes.length
 	];
-	for (const idx of indices) {
+	// Prefetch both neighbors in parallel
+	await Promise.all(indices.map(async idx => {
 		const t = themes[idx];
-		if (!t) continue;
-		// Fetch sound metadata if not loaded yet
+		if (!t) return;
 		await ensureThemeSounds(t);
-		if (!t.sounds) continue;
-		// Warm HTTP cache — max 4 concurrent fetches per neighbour to avoid flooding
+		if (!t.sounds) return;
+		// Decode and cache audio buffers so next navigation is instant
 		const urls = Object.values(t.sounds).filter(url => !bufferCache.has(url));
-		for (let i = 0; i < urls.length; i += 4) {
-			await Promise.all(urls.slice(i, i + 4).map(url => fetch(url).catch(() => {})));
+		await Promise.all(urls.map(async url => {
+			try {
+				const resp = await fetch(url);
+				const raw = await resp.arrayBuffer();
+				bufferCache.set(url, await audioCtx.decodeAudioData(raw));
+			} catch (e) {}
+		}));
+		// Preload bg into browser image decode cache (not just HTTP cache)
+		if (t.bgImage && !preloadedImages.has(t.bgImage)) {
+			await new Promise(resolve => {
+				const img = new Image();
+				img.onload = img.onerror = () => { preloadedImages.add(t.bgImage); resolve(); };
+				img.src = t.bgImage;
+			});
 		}
-		if (t.bgImage) fetch(t.bgImage).catch(() => {});
-	}
+	}));
 }
 
 async function loadThemeSounds(theme) {
@@ -515,29 +527,38 @@ async function switchTheme(direction) {
 	const container = document.querySelector('.container');
 	container.classList.add('switching');
 
-	const overlay = getThemeOverlay();
-	overlay.style.transition = 'none';
-	overlay.style.opacity = '1';
-
 	currentThemeIndex = (currentThemeIndex + direction + themes.length) % themes.length;
 	const theme = themes[currentThemeIndex];
-
 	updateThemeLabels();
 
-	// Preload background image before revealing
-	await new Promise(resolve => {
-		if (!theme.bgImage) { applyThemeColors(theme); resolve(); return; }
-		const img = new Image();
-		img.onload = () => { applyThemeColors(theme); resolve(); };
-		img.onerror = () => { applyThemeColors(theme); resolve(); };
-		img.src = theme.bgImage;
-	});
+	if (!theme.bgImage || preloadedImages.has(theme.bgImage)) {
+		// Everything pre-cached: smooth fade, sounds load from bufferCache simultaneously
+		await Promise.all([
+			new Promise(r => setTimeout(r, 250)),
+			loadThemeSounds(theme)
+		]);
+		applyThemeColors(theme);
+	} else {
+		// Background not yet cached: use overlay to hide the swap
+		const overlay = getThemeOverlay();
+		overlay.style.transition = 'none';
+		overlay.style.opacity = '1';
+		await new Promise(resolve => {
+			const img = new Image();
+			img.onload = img.onerror = () => {
+				if (theme.bgImage) preloadedImages.add(theme.bgImage);
+				applyThemeColors(theme);
+				resolve();
+			};
+			img.src = theme.bgImage;
+		});
+		overlay.style.transition = 'opacity 0.25s ease';
+		overlay.style.opacity = '0';
+		loadThemeSounds(theme);
+	}
 
-	// Reveal UI immediately — sounds load in background, then prefetch neighbours
-	overlay.style.transition = 'opacity 0.4s ease';
-	overlay.style.opacity = '0';
 	container.classList.remove('switching');
-	loadThemeSounds(theme).then(() => prefetchAdjacentThemes(currentThemeIndex));
+	prefetchAdjacentThemes(currentThemeIndex);
 }
 
 // Load sounds and bind buttons
@@ -707,15 +728,12 @@ window.addEventListener("load", async () => {
 	await new Promise(resolve => {
 		if (!themes[0].bgImage) { applyThemeColors(themes[0]); resolve(); return; }
 		const img = new Image();
-		img.onload = () => { applyThemeColors(themes[0]); resolve(); };
+		img.onload = () => { preloadedImages.add(themes[0].bgImage); applyThemeColors(themes[0]); resolve(); };
 		img.onerror = () => { applyThemeColors(themes[0]); resolve(); };
 		img.src = themes[0].bgImage;
 	});
 	updateThemeLabels();
-	await Promise.all([
-		loadThemeSounds(themes[0]),
-		new Promise(r => setTimeout(r, 1000))
-	]);
+	await loadThemeSounds(themes[0]);
 	dismissLoader();
 	prefetchAdjacentThemes(0);
 
@@ -894,8 +912,9 @@ window.addEventListener("load", async () => {
 	document.getElementById('auth-close').onclick = () => authOverlay.classList.add('hidden');
 	authOverlay.addEventListener('click', e => { if (e.target === authOverlay) authOverlay.classList.add('hidden'); });
 
-	document.getElementById('google-signin').onclick = () => {
-		db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+	document.getElementById('google-signin').onclick = async () => {
+		const { error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+		if (error) showAuthStatus('error', error.message);
 	};
 
 	// Tabs
@@ -1039,7 +1058,7 @@ window.addEventListener("load", async () => {
 			await new Promise(resolve => {
 				if (!theme.bgImage) { applyThemeColors(theme); resolve(); return; }
 				const img = new Image();
-				img.onload = () => { applyThemeColors(theme); resolve(); };
+				img.onload = () => { preloadedImages.add(theme.bgImage); applyThemeColors(theme); resolve(); };
 				img.onerror = () => { applyThemeColors(theme); resolve(); };
 				img.src = theme.bgImage;
 			});

@@ -161,8 +161,9 @@ document.getElementById('nav-logout-btn').addEventListener('click', async e => {
 
 document.getElementById('auth-close').onclick = () => overlay.classList.add('hidden');
 
-document.getElementById('google-signin').onclick = () => {
-  db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+document.getElementById('google-signin').onclick = async () => {
+  const { error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+  if (error) showStatus('error', error.message);
 };
 overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.add('hidden'); });
 
@@ -200,6 +201,7 @@ document.getElementById('signup-submit').onclick = async () => {
 };
 
 db.auth.getSession().then(({ data: { session } }) => updateUI(session));
+db.auth.onAuthStateChange((_event, session) => updateUI(session));
 
 // Silently preload first theme's sounds into browser cache so app.html opens faster
 (async () => {
