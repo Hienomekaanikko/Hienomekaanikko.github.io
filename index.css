@@ -17,7 +17,7 @@
 
 body {
   font-family: "Roboto", sans-serif;
-  background: #0d1a15 url('assets/landing.jpg') center/cover no-repeat;
+  background: #0d1a15 url('assets/landing.jpg') center/cover no-repeat fixed;
   min-height: 100vh;
   color: #1a2a4a;
   overflow-x: hidden;
