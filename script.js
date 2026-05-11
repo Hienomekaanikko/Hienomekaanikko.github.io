@@ -531,27 +531,31 @@ async function switchTheme(direction) {
 	const theme = themes[currentThemeIndex];
 	updateThemeLabels();
 
-	const overlay = getThemeOverlay();
-
-	// Fade to dark
-	overlay.style.transition = 'opacity 0.18s ease';
-	overlay.style.opacity = '1';
-	await new Promise(r => setTimeout(r, 180));
-
-	// While hidden: load image if not cached, start loading sounds
-	if (theme.bgImage && !preloadedImages.has(theme.bgImage)) {
+	if (!theme.bgImage || preloadedImages.has(theme.bgImage)) {
+		// Everything pre-cached: smooth fade, sounds load from bufferCache simultaneously
+		await Promise.all([
+			new Promise(r => setTimeout(r, 250)),
+			loadThemeSounds(theme)
+		]);
+		applyThemeColors(theme);
+	} else {
+		// Background not yet cached: use overlay to hide the swap
+		const overlay = getThemeOverlay();
+		overlay.style.transition = 'none';
+		overlay.style.opacity = '1';
 		await new Promise(resolve => {
 			const img = new Image();
-			img.onload = img.onerror = () => { preloadedImages.add(theme.bgImage); resolve(); };
+			img.onload = img.onerror = () => {
+				if (theme.bgImage) preloadedImages.add(theme.bgImage);
+				applyThemeColors(theme);
+				resolve();
+			};
 			img.src = theme.bgImage;
 		});
+		overlay.style.transition = 'opacity 0.25s ease';
+		overlay.style.opacity = '0';
+		loadThemeSounds(theme);
 	}
-	applyThemeColors(theme);
-	loadThemeSounds(theme);
-
-	// Fade back in
-	overlay.style.transition = 'opacity 0.3s ease';
-	overlay.style.opacity = '0';
 
 	container.classList.remove('switching');
 	prefetchAdjacentThemes(currentThemeIndex);
